@@ -72,9 +72,9 @@ commit ที่ 2 (หลังอนุมัติ)
 | prompt-log.md | เพิ่ม #69 ถึง #72 | ทุกคำสั่งและการตัดสินของรอบนี้ |
 | .gitignore | เพิ่ม *.pyc, .pytest_cache/, backend/backups/, erasure-ledger.jsonl | ไม่ให้ไฟล์ที่เกิดตอนรันเข้า repo |
 
-ดู diff ทั้งหมดของรอบอนุมัติ: `git diff cr07-proposed b3 --stat`
+ดู diff ทั้งหมดของรอบอนุมัติ: `git diff origin/checkpoint/cr07-proposed origin/checkpoint/b3 --stat`
 
-> แท็ก (เช่น cr07-proposed, b3) ใช้ได้เมื่อ clone repo นี้ ถ้าสร้างด้วยปุ่ม Use this template บน GitHub จะไม่ได้ประวัติ commit และแท็กมาด้วย
+> จุดในประวัติ (เช่น checkpoint/cr07-proposed, checkpoint/b3) เป็น branch ชื่อขึ้นต้น checkpoint/ เปิดได้ด้วย `git checkout checkpoint/ชื่อ` หลัง clone ถ้าสร้าง repo ของกลุ่มด้วยปุ่ม Use this template ให้ติ๊ก Include all branches
 
 
 ## งานของบทนี้ที่นักศึกษาต้องทำต่อ
@@ -110,7 +110,7 @@ git push -u origin main
 ```
 
 `git remote set-url origin` เปลี่ยนปลายทางของ push จาก repo ของผู้สอนเป็น repo ของกลุ่ม (ต้องสร้าง repo เปล่าบน GitHub ไว้ก่อน)
-ถ้าอยากเริ่มจากสภาพ Failure Day ที่ยังไม่อนุมัติ ใช้ `git checkout cr07-proposed` แล้วสร้าง branch ของกลุ่มจากจุดนั้น
+ถ้าอยากเริ่มจากสภาพ Failure Day ที่ยังไม่อนุมัติ ใช้ `git checkout checkpoint/cr07-proposed` แล้วสร้าง branch ของกลุ่มจากจุดนั้น
 
 ## ทีม
 
@@ -184,7 +184,7 @@ python ops_backup.py restore ../offsite-test /tmp/restored.db
 
 - Python 3.11, 3.12, 3.13: บรรทัดสุดท้าย `66 passed, 1 skipped, 1 warning` (ข้าม 1 คือ AC-07-10 แถว R3 ที่รอ Q-14)
 - หน้าจอ: `Test Files 17 passed (17)` และ `Tests 31 passed (31)`
-- ถ้าเปิด commit ที่ 1 (`git checkout cr07-proposed`) จะได้ 41 passed, 1 skipped และ 27 passed เท่ารอบ R1
+- ถ้าเปิด commit ที่ 1 (`git checkout checkpoint/cr07-proposed`) จะได้ 41 passed, 1 skipped และ 27 passed เท่ารอบ R1
 
 ## สิ่งที่รู้อยู่แล้วว่ายังไม่ใช่ของจริง
 
