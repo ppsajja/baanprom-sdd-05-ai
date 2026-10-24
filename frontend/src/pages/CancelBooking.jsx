@@ -16,7 +16,8 @@ export default function CancelBooking({ api, customerId, initialJobId = '', onCa
     setError('')
     setQuote(null)
     const { status, body } = await api.getRefundQuote({ jobId, customerId })
-    if (status === 404) return setError('ไม่พบงานหมายเลขนี้')
+    // CR-07 REQ-SEC-010 (AC-08-10): ระบบตอบ 403 ทั้งงานของคนอื่นและงานที่ไม่มี หน้าจอแสดงข้อความเดิมของ UI-08-01 สถานะ 3
+    if (status === 404 || status === 403) return setError('ไม่พบงานหมายเลขนี้')
     if (status !== 200) return setError('เกิดข้อผิดพลาด กรุณาลองใหม่')
     setQuote(body)
   }

@@ -1,0 +1,19 @@
+# rtm.md ตารางตามรอยของข้อกำหนดข้ามทุก feature (Constraint กลางรุ่น 1.1 ส่วน 6)
+
+ไฟล์ใหม่ใน CR-07 (24 ต.ค. 2569) AI ร่าง ทีมตรวจทุกแถวและเขียนช่อง "ทีมตัดสิน" เอง แถวที่ผูกกับ feature เดียวอยู่ใน rtm.md ของ feature นั้น ส่วน 3
+
+| REQ | ที่มา (EV) | AC | test | task | โค้ด / เอกสาร | สถานะ | ทีมตัดสิน |
+|---|---|---|---|---|---|---|---|
+| REQ-OP-001 | เหตุการณ์ A, Q-25, EV-045 | AC-00-04 (และ AC-07-08, AC-09-12, AC-08-09 ใน feature) | test_AC_00_04_health_and_ready | T-24 ของ 002 | ops/router.py | ครบในห้องเรียน เวลาล่มรายเดือนวัดบนระบบจริง | รับ |
+| REQ-OP-005 | เหตุการณ์ A, B, C, Q-43 | AC-00-01, AC-00-02, AC-00-03 | test_AC_00_01, test_AC_00_02, test_AC_00_03 | T-24 ของ 002 | main.py (middleware), ops/metrics.py, ops/alerts.py, privacy.py (log_event) | ขาดบางส่วน: ช่องทางถึงคนเวรยังเป็น log (GAP-28) | รับ ตาม GAP-28 ต่อ |
+| REQ-OP-006 | เหตุการณ์ B, Q-43 | ไม่มี AC | ไม่มี (walkthrough EV-045) | T-25 ของ 002 | docs/srs/operations.md | ครบสำหรับเหตุการณ์ที่ 1 ถึง 3 | รับ |
+| REQ-OP-007 | Q-44 | AC-00-05 (และ AC-07-18) | test_AC_00_05_backup_restore_drill_within_rpo | T-23 ของ 002 | ops/backup.py, ops_backup.py, operations.md ส่วนสำรองและกู้คืน | ครบในห้องเรียน ยังไม่ซ้อมบนระบบจริง | รับ เป็นเงื่อนไขก่อนเปิด R1 |
+| REQ-QA-010 | เหตุการณ์ B, Q-40 | ดู rtm.md ของ 002, 003, 004 | | T-18 ของ 002, T-08 และ T-10 ของ 003, T-07 และ T-08 ของ 004 | payments/, notify/queue.py, refund/service.py | ครบ IF-03 ยังไม่เรียกจริง | รับ |
+| REQ-SEC-010 | MU-01, เหตุการณ์ C, Q-47 | AC-00-08 (และ AC ใน feature) | test_AC_00_08 | T-24 ของ 002 (บรรทัดที่ 3) | ops/audit.py, ops/alerts.py | ขาดบางส่วน (GAP-24) | รับความเสี่ยงตาม SH-01 |
+| REQ-SEC-011 | TH-03, Q-45 | AC-07-14 | ดู 002 | T-19 ของ 002 | booking/service.py | ครบ | รับ |
+| REQ-SEC-012 | OWASP API5, API8, API9:2023 EV-045 | AC-00-06, AC-00-07, AC-07-16 | test_AC_00_06, test_AC_00_07 | T-21, T-24, T-25 ของ 002 | main.py, clock.py, ops/guard.py, operations.md บัญชี endpoint | ครบ | รับ |
+| REQ-PRV-010 | PDPA, Q-46 | AC-07-17, AC-07-18 | ดู 002 | T-22, T-23 ของ 002 | erasure/ | ครบ | รับ |
+| REQ-CMP-001 | PDPA, Q-46 | ไม่มี AC (inspection) | ไม่มี | ไม่มี task | constraints.md บรรทัด "ผลการตรวจโดยฝ่ายกฎหมาย" | ครบ | รับ |
+
+ตามรอยย้อนกลับ: โค้ดใหม่ทุกไฟล์ใน backend/app/ops/ และ backend/app/erasure/ มีรหัส REQ ในบรรทัดแรก ไม่มีของเกิน
+ข้อค้นพบ: ไม่มี F ใหม่ ช่องว่างที่พบอยู่ใน gaps.md (GAP-21 ถึง GAP-28)

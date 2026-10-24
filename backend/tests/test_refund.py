@@ -16,7 +16,33 @@ def make_confirmed_job(client, db, seed):
 
 
 def cancel(client, job_id, by, now):
-    return client.post(f"/jobs/{job_id}/cancel?now={now.isoformat()}", json={"cancelled_by": by})
+    # CR-07 (GAP-23): POST /jobs/{id}/cancel ถูกปิด (REQ-SEC-010, OWASP API9:2023) แก้เฉพาะ helper ส่วน When นี้
+    # ลูกค้าเป็นผู้ยกเลิก = POST /jobs/{id}/customer-cancel ในนามเจ้าของงาน | ระบบเป็นผู้ยกเลิก (R4, R5) = เรียก cancel_job
+    # ภายในระบบ เพราะ R1 ไม่มี endpoint ให้คนนอกสั่งยกเลิกในนามระบบ Given และ Then ของ AC-07-10 ไม่เปลี่ยน
+    from app.db import session as db_session
+    from app.payments.gateway import get_gateway
+    from app.refund import service
+    s = db_session.SessionLocal()
+    job = s.get(Job, job_id)
+    if by == "customer":
+        s.close()
+        return client.post(f"/jobs/{job_id}/customer-cancel?now={now.isoformat()}", json={"customer_id": job.customer_id})
+    try:
+        d, refund = service.cancel_job(s, job, by, now, get_gateway())
+        return _Result(200, {"job_id": job.id, "status": job.status, "rule": d.rule,
+                             "refund_amount": refund.amount if refund else 0})
+    except service.CancelRejected as e:
+        return _Result(409, {"rule": e.decision.rule, "outcome": e.decision.outcome, "message": e.message})
+    finally:
+        s.close()
+
+
+class _Result:
+    def __init__(self, status_code, body):
+        self.status_code, self._body, self.text = status_code, body, str(body)
+
+    def json(self):
+        return self._body
 
 
 # รองรับ AC-07-10 (REQ-BR-001, BR-01)

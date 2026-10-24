@@ -1,4 +1,6 @@
-"""POST /slots/{id}/hold, GET /deposit-quote, POST /bookings, GET /jobs/{id}, GET /jobs/{id}/technician-view (plan.md ข้อ 4)"""
+"""POST /slots/{id}/hold, GET /deposit-quote, POST /bookings, GET /jobs/{id}, GET /jobs/{id}/technician-view (plan.md ข้อ 4)
+CR-07: REQ-SEC-011 (409 hold_limit), REQ-QA-010 (202 payment_pending), REQ-SEC-010 (technician-view 403 และบันทึก)
+log ผ่าน log_event เท่านั้น (REQ-OP-005 บรรทัดที่ 3)"""
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -11,7 +13,8 @@ from app.db.models import TimeSlot, Customer, ServiceAddress, Job
 from app.booking import service
 from app.payments.gateway import get_gateway
 from app.clock import get_now
-from app.privacy import get_logger
+from app.privacy import get_logger, log_event
+from app.ops import audit
 
 router = APIRouter()
 log = get_logger(__name__)
@@ -44,7 +47,23 @@ def hold(slot_id: int, body: HoldIn, db: Session = Depends(get_db), now: datetim
         slot = service.hold_slot(db, slot, body.customer_id, now)
     except service.SlotTaken as e:
         return JSONResponse({"reason": "slot_taken", "alternatives": e.alternatives}, status_code=409)
+    except service.HoldLimitReached as e:
+        return hold_limit_response(e)
     return {"slot_id": slot.id, "hold_expires_at": slot.hold_expires_at.isoformat()}
+
+
+# ข้อความที่หน้าจอแสดงเมื่อถือล็อกครบเพดาน (UI-07-01 รายการ "ต้องตรง" ที่เพิ่มโดย CR-07) อยู่ที่นี่ที่เดียว
+MSG_HOLD_LIMIT = "คุณล็อกช่วงเวลาอื่นไว้อยู่ กรุณายืนยันช่วงนั้นหรือรอให้หมดอายุก่อน"
+# ข้อความเมื่อ gateway ไม่ตอบ (UI-07-02 รายการ "ต้องตรง" ที่เพิ่มโดย CR-07) เวลาสิ้นสุดของล็อกส่งแยกใน hold_expires_at
+MSG_PAYMENT_PENDING = "ระบบชำระเงินขัดข้อง เราล็อกช่วงเวลาไว้ให้ถึง {until} น. กดยืนยันอีกครั้งได้ ระบบจะไม่ตัดเงินซ้ำ"
+
+
+def hold_limit_response(e: "service.HoldLimitReached") -> JSONResponse:
+    # รองรับ REQ-SEC-011 (AC-07-14): ปฏิเสธ 409 และบอกว่าช่วงใดที่ยังถืออยู่
+    return JSONResponse({"reason": "hold_limit", "message": MSG_HOLD_LIMIT,
+                         "held": [{"slot_id": s.id, "start": s.start.isoformat(),
+                                   "hold_expires_at": s.hold_expires_at.isoformat()} for s in e.held]},
+                        status_code=409)
 
 
 @router.get("/deposit-quote")
@@ -71,14 +90,26 @@ def create(body: BookingIn, db: Session = Depends(get_db), now: datetime = Depen
         job = service.create_booking(db, customer, slot, address, body.category, get_gateway(), now)
     except service.SlotTaken as e:
         return JSONResponse({"reason": "slot_taken", "alternatives": e.alternatives}, status_code=409)
+    except service.HoldLimitReached as e:
+        return hold_limit_response(e)
+    except service.PaymentPending as e:
+        # รองรับ REQ-QA-010 บรรทัดที่ 3 (AC-07-12): 202 = รับคำขอแล้วแต่ยังไม่รู้ผลเงิน
+        log_event(log, "booking_pending_payment", job_id=e.job.id, customer_id=customer.id)
+        until = e.slot.hold_expires_at
+        return JSONResponse({"reason": "payment_pending", "job_id": e.job.id, "status": e.job.status,
+                             "hold_expires_at": until.isoformat() if until else None,
+                             "message": MSG_PAYMENT_PENDING.format(until=f"{until:%H:%M}" if until else "")},
+                            status_code=202)
     except service.PaymentFailed as e:
         return JSONResponse({"reason": "payment_failed", "detail": e.reason, "job_id": e.job_id}, status_code=402)
-    log.info("booking created job=%s customer=%s", job.id, customer.id)  # ไม่มีเบอร์โทร (REQ-PRV-002)
+    log_event(log, "booking_created", job_id=job.id, customer_id=customer.id)  # ไม่มีเบอร์โทร (REQ-PRV-002)
     return job_out(job)
 
 
 @router.get("/jobs/{job_id}")
 def get_job(job_id: int, db: Session = Depends(get_db)):
+    # CR-07 EV-045: R1 ยังไม่รู้ตัวผู้ขอ (ไม่มีการเข้าสู่ระบบ) endpoint นี้ไม่มีข้อมูลส่วนบุคคล
+    # SH-01 ยอมรับความเสี่ยงจนกว่า UC-02 มาใน R2 (GAP-24) ไม่ใช่การยกเว้น REQ-SEC-010 ถาวร
     job = db.get(Job, job_id)
     if not job:
         raise HTTPException(404, "ไม่พบงาน")
@@ -87,10 +118,12 @@ def get_job(job_id: int, db: Session = Depends(get_db)):
 
 @router.get("/jobs/{job_id}/technician-view")
 def technician_view(job_id: int, technician_id: int, db: Session = Depends(get_db), now: datetime = Depends(get_now)):
-    # รองรับ REQ-SEC-004
-    job = db.get(Job, job_id)
-    if not job or job.technician_id != technician_id:
-        raise HTTPException(404, "ไม่พบงานของช่างคนนี้")
+    # รองรับ REQ-SEC-004 และ REQ-SEC-010 (CR-07, AC-07-15): ไม่ใช่งานของช่างคนนี้หรือไม่มีงาน ตอบ 403 เหมือนกัน และบันทึก
+    job = audit.job_of_technician(db, job_id, technician_id, "GET /jobs/{job_id}/technician-view", now)
     data = service.technician_view(job, now)
-    log.info("technician %s viewed job %s: %s", technician_id, job_id, data)
+    if "customer_phone" in data:
+        audit.record_phone_revealed(db, technician_id, job.id, "GET /jobs/{job_id}/technician-view", now)
+        db.commit()
+    # GAP-22: เดิม log ทั้ง dict (ชื่อลูกค้าหลุดลง log ได้ เบอร์ถูกกรอง) ตอนนี้ log เฉพาะรหัส
+    log_event(log, "technician_view", technician_id=technician_id, job_id=job.id)
     return data

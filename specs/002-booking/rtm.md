@@ -77,3 +77,25 @@ REQ ที่เกี่ยวกับ UC-07 ทั้งหมด 13 ข้�
 สาเหตุ: spec 5 | ai 3 | test 2 (ข้อที่มีสองสาเหตุนับทั้งสอง)
 
 สิ่งที่ได้เรียนจากตารางนี้: รอบที่แล้ว test ผ่าน 9 จาก 10 AC แต่ REQ สองข้อไม่มี AC เลย (F-01, F-08) และอีกหนึ่งข้อทำไม่ครบบนหน้าจอ (F-06) test ที่ผ่านบอกได้แค่ว่าสิ่งที่มี AC ถูกทำตรง ไม่ได้บอกว่าทุก REQ มี AC
+
+## 3. แถวที่เพิ่มตาม CR-07 (24 ต.ค. 2569)
+
+AI ร่าง ทีมตรวจทุกแถวและเขียนช่อง "ทีมตัดสิน" เอง ข้อในไฟล์กลางที่ไม่เป็นของ feature ใด อยู่ใน specs/000-shared/rtm.md
+
+| REQ | ที่มา (EV) | อยู่ใน spec ส่วน 4 | AC | test | task | โค้ด / หน้าจอ | สถานะ | ทีมตัดสิน |
+|---|---|---|---|---|---|---|---|---|
+| REQ-QA-010 (IF-01 ตัดมัดจำ) | เหตุการณ์ B, EV-045 | ตารางข้อของไฟล์กลาง | AC-07-12, AC-07-13 | test_AC_07_12, test_AC_07_13, AC-07-12.test.jsx | T-18, T-26 | payments/service.py, booking/service.py, booking/router.py, technicians/service.py, ConfirmBooking.jsx | ครบ | รับ |
+| REQ-SEC-011 | TH-03, EV-045 | ตารางข้อของไฟล์กลาง | AC-07-14 | test_AC_07_14, AC-07-14.test.jsx | T-19, T-26 | booking/service.py, booking/router.py, config.py, TechnicianPicker.jsx | ครบ | รับ |
+| REQ-SEC-010 (มุมมองช่าง และ endpoint ยกเลิกเดิม) | MU-01, เหตุการณ์ C, EV-045 | ตารางข้อของไฟล์กลาง | AC-07-15, AC-07-16 | test_AC_07_15, test_AC_07_16 | T-20, T-21 | ops/audit.py, booking/router.py, main.py (ไม่ include refund/router.py) | ขาดบางส่วน: GET /jobs/{id} ยังไม่ตรวจ (GAP-24) | รับความเสี่ยงตาม SH-01 จนถึง UC-02 |
+| REQ-PRV-010 | PDPA, EV-045 (SH-05) | ตารางข้อของไฟล์กลาง | AC-07-17, AC-07-18 | test_AC_07_17 x2, test_AC_07_18 | T-22, T-23 | erasure/service.py, erasure/router.py, ops/backup.py | ครบ (การส่งคำขอลบไป IF-02 จริงรอข้อตกลงกับผู้ให้บริการ) | รับ |
+
+ตามรอยย้อนกลับที่เพิ่ม
+
+| ของที่มีอยู่จริง | อ้าง REQ หรือ AC ข้อไหน | ข้อค้นพบ |
+|---|---|---|
+| คำตอบ 202 payment_pending ของ POST /bookings | REQ-QA-010, AC-07-12 | ไม่มี |
+| คำตอบ 409 hold_limit ของ POST /slots/{id}/hold | REQ-SEC-011, AC-07-14 | ไม่มี |
+| ตาราง security_events | REQ-SEC-010 บรรทัดที่ 2 และ 4 | ไม่มี |
+| POST /ops/erasure-requests | REQ-PRV-010 | ไม่มี |
+| ข้อความใหม่บน UI-07-01 และ UI-07-02 | AC-07-12, AC-07-14 (รายการ "ต้องตรง" ที่ CR-07 เพิ่ม) | mockup ยังไม่มีภาพของสถานะนี้ (GAP-26) |
+| POST /jobs/{id}/cancel | ไม่มีแล้ว (ปิดตาม CR-07) | ปิด F-12 เดิมของ 004 ไม่ต้องตามต่อ endpoint นี้ |

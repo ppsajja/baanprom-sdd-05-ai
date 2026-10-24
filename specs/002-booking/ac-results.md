@@ -105,3 +105,30 @@ pytest: 19 passed, 1 skipped | vitest: 14 passed (6 ไฟล์)
 1. สิ่งที่ขอเปลี่ยนทำครบไหม: ครบ AC-07-11 ผ่านทั้งหลังบ้านและหน้าจอ และหน้าจอ 3 หน้าตรงกับรายการ "ต้องตรง" ทั้ง test และตาคน
 2. ของเดิมพังไหม: พัง 1 ข้อในรอบที่ 3 (AC-07-04 หน้าจอ) เพราะตารางผลกระทบของ CR-03 ไล่ไม่ถึง test หน้าจอเดิม แก้ที่ CR ก่อนแล้วจึงแก้ Given ของ test รอบที่ 4 ผ่านครบ
 3. ยังเหลืออะไร: R3 ของ BR-01 (Q-14) AC-07-08 ฉบับวัดได้ (CR-02) และข้อค้นพบ F-05 ถึง F-08 ซึ่ง test ทั้งชุดมองไม่เห็น เพราะเป็นเรื่องที่ยังไม่มี AC
+
+## รอบ CR-07 (24 ต.ค. 2569 หลัง T-17 ถึง T-27) = specs/000-shared/test-run.txt
+
+รอบนี้รันทั้งโครงการครั้งเดียว ผลอยู่ที่ specs/000-shared/test-run.txt (Python 3.11, 3.12 จาก export สะอาด และ 3.13) รอบแรกหลังแก้โค้ดก่อนแก้ test เดิมอยู่ที่ specs/000-shared/test-run-cr07-round1.txt
+แถว AC-07-01 ถึง 11 ที่ไม่มีหมายเหตุ ผลเหมือนรอบที่ 4 และ test ไม่ถูกแตะ
+
+| AC ID | REQ ที่พิสูจน์ | test | task | ผล | หมายเหตุ |
+|---|---|---|---|---|---|
+| AC-07-01 ถึง AC-07-04 | REQ-FN-008, REQ-FN-012, REQ-FN-041 | test_booking.py 4 ตัว | T-02 ถึง T-07 | ผ่าน | ไม่แตะ test AC-07-04 ยังผ่านแม้มีเพดานล็อก เพราะตรวจ slot_taken ก่อนเพดาน |
+| AC-07-05, AC-07-06, AC-07-07 | REQ-IF-001, REQ-IF-005 | test_payment.py 3 ตัว | T-05 | ผ่าน | ไม่แตะ AC-07-05 ไม่ต้องแก้ตาม CR-07 ข้อ ข5 |
+| AC-07-08 | REQ-QA-003 | test_AC_07_08_search_under_load_scaled | T-09 | ผ่าน (ย่อส่วน 20 จาก 500) | ยังไม่ใช่ผลตรวจรับ รอ CR-02 |
+| AC-07-09 | REQ-SEC-004, REQ-PRV-002 | test_AC_07_09_phone_hidden_until_2h | T-08 | ผ่าน | ไม่แตะ log ของ technician-view เปลี่ยนเป็น log_event แล้วยังไม่มีเบอร์ |
+| AC-07-10 R1, R2, R4, R5, R6, R3 ชั่วคราว | REQ-BR-001 | test_refund.py 6 ตัว (R3 ข้าม 1 ตัว) | T-06, T-21 | ผ่าน | helper ส่วน When เปลี่ยนตาม CR-07 ข้อ ข4 (GAP-23) Given Then และตัวเลขไม่เปลี่ยน |
+| AC-07-11 | REQ-BR-002 | test_AC_07_11_deposit_shown_equals_charged x3, AC-07-11.test.jsx | T-12, T-13 | ผ่าน | ไม่แตะ |
+| AC-07-12 | REQ-QA-010 | test_AC_07_12_gateway_unreachable_keeps_hold_as_pending | T-18 | ผ่าน | ใหม่ ผ่านตั้งแต่รันครั้งแรก |
+| AC-07-12, AC-07-13 (หน้าจอ) | REQ-QA-010 | AC-07-12.test.jsx (2 test) | T-26 | ผ่าน | ใหม่ |
+| AC-07-13 | REQ-QA-010, REQ-IF-005 | test_AC_07_13_retry_uses_same_reference_no_double_charge | T-18 | ผ่าน | ใหม่ เหตุการณ์ B ในรูป test |
+| AC-07-14 | REQ-SEC-011 | test_AC_07_14_second_hold_rejected, AC-07-14.test.jsx | T-19, T-26 | ผ่าน | ใหม่ รันครั้งแรกพัง 500 (GAP-27) แก้แล้ว พิสูจน์ชั้น 3: เพดาน 2 ช่วง test พัง |
+| AC-07-15 | REQ-SEC-010, REQ-SEC-004 | test_AC_07_15_technician_view_other_job_forbidden_and_logged | T-20 | ผ่าน | ใหม่ |
+| AC-07-16 | REQ-SEC-010, REQ-SEC-012 | test_AC_07_16_legacy_cancel_endpoint_closed | T-21 | ผ่าน | ใหม่ รันครั้งแรกพังเพราะ test อ่าน app.routes ซึ่งรุ่น FastAPI นี้ไม่แสดง route ของ router ที่ include (ข้อผิดของ test ไม่ใช่โค้ด) แก้ให้อ่าน /openapi.json |
+| AC-07-17 | REQ-PRV-010 | test_AC_07_17_erasure_removes_phone_keeps_anonymous_history, test_AC_07_17_erasure_waits_for_active_job | T-22 | ผ่าน | ใหม่ ค้นเบอร์ในทุกตารางของ SQLite |
+| AC-07-18 | REQ-PRV-010, REQ-OP-007 | test_AC_07_18_restore_does_not_bring_back_erased_data | T-23 | ผ่าน | ใหม่ บนไฟล์ SQLite ระบบจริงต้องซ้อมบน PostgreSQL |
+
+สรุปสามบรรทัด
+1. สิ่งที่ขอทำครบไหม: ครบ AC-07-12 ถึง 18 ผ่านทั้งหมด และ AC ข้ามทุก feature (AC-00-01 ถึง 08) ผ่านใน specs/000-shared/ac-results.md
+2. ของเดิมพังไหม: รอบแรกพัง 8 ตัว ทั้งหมดเป็น test ที่ CR-07 ระบุไว้ก่อนว่าพฤติกรรมเปลี่ยน แก้เฉพาะบรรทัดตามตาราง "test เดิมที่เปลี่ยน" ของ CR-07 test อื่นไม่ถูกแตะและผ่าน
+3. ยังเหลืออะไร: R3 (Q-14), AC-07-08 ฉบับวัดได้ (CR-02), mockup ของสถานะใหม่ (GAP-26), GET /jobs/{id} ยังไม่ตรวจสิทธิ์ (GAP-24)

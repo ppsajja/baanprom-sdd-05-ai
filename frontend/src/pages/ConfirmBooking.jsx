@@ -3,6 +3,8 @@
 // รองรับ REQ-FN-041: แสดงเวลาที่การล็อกสิ้นสุดจาก held.holdExpiresAt ไม่พิมพ์จำนวนนาทีตายตัว (Q-18 ยังเปิด)
 // รองรับ AC-07-04: ได้ 409 slot_taken แสดง "ช่วงเวลาถูกจองแล้ว" และปุ่มช่วงใกล้เคียง
 // รองรับ AC-07-06: ได้ 402 แสดง "ชำระมัดจำไม่สำเร็จ"
+// CR-07 รองรับ AC-07-12 (REQ-QA-010): ได้ 202 payment_pending แสดงข้อความที่ระบบส่งมา และให้กดยืนยันอีกครั้งได้
+// (ระบบลองใหม่ด้วย reference เดิม ไม่ตัดเงินซ้ำ AC-07-13) เวลาสิ้นสุดของล็อกมาจากคำตอบ ไม่พิมพ์ตัวเลขเอง (D-00-05)
 import { useState } from 'react'
 import Steps from '../components/Steps.jsx'
 
@@ -28,6 +30,7 @@ export default function ConfirmBooking({ api, customerId, addressId, held, onCon
     if (status === 201) return onConfirmed(body)
     if (status === 409 && body.reason === 'slot_taken') return setState({ kind: 'taken', alternatives: body.alternatives })
     if (status === 402) return setState({ kind: 'payment_failed' })
+    if (status === 202 && body.reason === 'payment_pending') return setState({ kind: 'payment_pending', message: body.message })
     setState({ kind: 'error' })
   }
 
@@ -45,7 +48,7 @@ export default function ConfirmBooking({ api, customerId, addressId, held, onCon
         <dd className="font-semibold text-slate-900" data-testid="deposit">{hasDeposit ? `${deposit} บาท` : 'ยังไม่ทราบยอดมัดจำ'}</dd>
       </dl>
 
-      {!blocked && held.holdExpiresAt && (
+      {!blocked && held.holdExpiresAt && state.kind !== 'payment_pending' && (
         <p className="mt-3 rounded-lg border border-teal-200 bg-teal-50 p-3 text-sm text-teal-800">
           ล็อกช่วงเวลานี้ไว้ให้คุณถึง {fmtTime(held.holdExpiresAt)} น.
         </p>
@@ -83,6 +86,11 @@ export default function ConfirmBooking({ api, customerId, addressId, held, onCon
           <p className="font-medium">ชำระมัดจำไม่สำเร็จ</p>
           <p className="mt-1 text-sm">การจองถูกยกเลิก ยังไม่มีการตัดเงิน ช่วงเวลากลับเป็นว่างแล้ว</p>
         </div>
+      )}
+      {state.kind === 'payment_pending' && (
+        <p role="alert" data-testid="payment-pending" className="mt-4 rounded-lg border border-orange-300 bg-orange-50 p-3 text-sm text-orange-800">
+          {state.message}
+        </p>
       )}
       {state.kind === 'error' && (
         <p role="alert" className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">เกิดข้อผิดพลาด กรุณาลองใหม่</p>

@@ -94,7 +94,8 @@ def test_AC_09_05_transition_not_allowed(client, db, seed, from_status, to_statu
 def test_AC_09_06_other_technician_cannot_change(client, db, seed):
     job = confirmed_job(client, db, seed)
     r = change(client, job.id, seed["far"].id, "en_route")
-    assert r.status_code == 404
+    # CR-07 (Q-47, GAP-23): AC-09-06 บรรทัด Then แก้จาก "ไม่พบงานของช่างคนนี้" (404) เป็น "ไม่มีสิทธิ์กับงานนี้" (403)
+    assert r.status_code == 403
     db.refresh(job); assert job.status == "confirmed"
 
 

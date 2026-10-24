@@ -25,6 +25,8 @@ export default function TechnicianPicker({ api, customerId, addressId, onHeld })
   async function pick(tech, slot) {
     // REQ-FN-041: เลือกช่วงเวลาแล้วล็อกทันที ถ้าคนอื่นล็อกไปก่อน (BR-02) ให้แจ้งและเลือกใหม่
     const hold = await api.holdSlot({ slotId: slot.slot_id, customerId })
+    // CR-07 REQ-SEC-011 (AC-07-14): ถือล็อกช่วงอื่นอยู่ ระบบตอบ 409 hold_limit แสดงข้อความที่ระบบส่งมา
+    if (hold.status === 409 && hold.body.reason === 'hold_limit') return setError(hold.body.message)
     if (hold.status === 409) return setError('ช่วงเวลานี้เพิ่งถูกจองไป')
     // REQ-BR-002: ขอยอดมัดจำจากระบบ ไม่คำนวณหรือพิมพ์ยอดเองในหน้าจอ (D-00-05)
     const quote = await api.getDepositQuote({ category })

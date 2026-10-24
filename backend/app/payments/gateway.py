@@ -26,7 +26,8 @@ class Gateway:
     def status_inquiry(self, ref: str) -> GatewayResult:  # REQ-IF-005
         raise NotImplementedError
 
-    def refund(self, ref: str, amount: int) -> GatewayResult:  # REQ-IF-010 คืนเงินด้วย reference ของการชำระเดิม (CR-06)
+    def refund(self, ref: str, amount: int, timeout_seconds: int | None = None) -> GatewayResult:
+        # REQ-IF-010 คืนเงินด้วย reference ของการชำระเดิม (CR-06) | CR-07 REQ-QA-010 รอไม่เกิน timeout_seconds
         raise NotImplementedError
 
 
@@ -34,12 +35,14 @@ class Gateway:
 class FakeGateway(Gateway):
     """สั่งพฤติกรรมได้: mode = approved | declined | timeout
     inquiry_answer = คำตอบของ status-inquiry เมื่อ timeout (approved / declined / unknown)
-    refund_mode = คำตอบของคำขอคืนเงิน (approved / declined) CR-06"""
+                     CR-07: "timeout" = gateway ไม่ตอบ status-inquiry ด้วย (ไม่ตอบเลย เหตุการณ์ B)
+    refund_mode = คำตอบของคำขอคืนเงิน (approved / declined) CR-06 | CR-07: "timeout" = ไม่ตอบคำขอคืนเงิน"""
     mode: str = "approved"
     inquiry_answer: str = "unknown"
     refund_mode: str = "approved"
     calls: list[str] = field(default_factory=list)
     last_timeout_seconds: int | None = None
+    last_refund_timeout_seconds: int | None = None
 
     def authorize(self, ref, amount, timeout_seconds):
         self.calls.append(f"authorize:{ref}")
@@ -58,10 +61,15 @@ class FakeGateway(Gateway):
 
     def status_inquiry(self, ref):
         self.calls.append(f"inquiry:{ref}")
+        if self.inquiry_answer == "timeout":
+            raise GatewayTimeout(ref)
         return GatewayResult(self.inquiry_answer, ref)
 
-    def refund(self, ref, amount):
+    def refund(self, ref, amount, timeout_seconds=None):
         self.calls.append(f"refund:{ref}:{amount}")
+        self.last_refund_timeout_seconds = timeout_seconds
+        if self.refund_mode == "timeout":
+            raise GatewayTimeout(ref)
         return GatewayResult(self.refund_mode, ref)
 
 

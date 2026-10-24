@@ -3,6 +3,8 @@
 อ้างอิง: spec.md SPEC-JOB-STATUS v0.2 (หลัง /clarify) และ v1.0 (CR-05) | Updated: 2569-10-18 | สร้างด้วย /plan แล้วทีมตรวจแล้ว (plan v1, prompt-log.md #47)
 อ้างอิง Constraint กลาง: specs/000-shared/constraints.md รุ่น 1.0 (D-00-01 ถึง D-00-05 ใช้ตาม ไม่ถามซ้ำ)
 
+plan v2 (2569-10-24): CR-07 อนุมัติ แก้เฉพาะตารางข้อ 5 ส่วนรุ่น 1.1 และเพิ่มข้อ 9 ด้วยข้อความสั่งในแชต **ไม่ได้รัน /plan ใหม่** (prompt-log.md #70) อ้างอิง spec.md 1.1 และ Constraint กลางรุ่น 1.1
+
 ## 1. สรุปแนวทาง
 
 - ช่างเปิดรายการงานของตัวเอง (REQ-FN-050) แล้วกดปุ่มเปลี่ยนสถานะตามลูกศร BR-04 (REQ-FN-051) ระบบบันทึกประวัติ (REQ-DAT-002) และแจ้งลูกค้า (REQ-FN-053)
@@ -95,15 +97,16 @@ Constraint กลางจาก specs/000-shared/constraints.md รุ่น 1.
 
 | Constraint ID | ถ้าอนุมัติ จะใช้ที่ไหนใน plan | สถานะ |
 |---|---|---|
-| REQ-OP-001 | เวลาล่มนับทั้งระบบ endpoint ของ feature นี้ (GET /technicians/{id}/jobs, POST /jobs/{id}/status, GET /jobs/{id}/history) อยู่ใต้ /health ตัวเดียวกับ 002 ไม่มี SLO เฉพาะของ feature จนกว่า Q-39 จะตอบ (ดู quality-requirements.md QAS-2) | รอ CR-07 |
-| REQ-OP-005 | middleware ตัวนับของ 002 คลุม router ของ jobstatus โดยอัตโนมัติ ไม่มีโค้ดเพิ่มใน feature นี้ แต่ต้องตรวจว่าชื่อ endpoint แยกกันในตัวนับ | รอ CR-07 |
-| REQ-OP-006 | เหตุ "ฐานข้อมูลเต็ม" ทำให้ set_status บันทึกประวัติไม่ได้ ช่างกดแล้วได้ข้อผิดพลาด คู่มือใน docs/srs/operations.md เหตุการณ์ที่ 2 ต้องบอกว่าช่างควรทำอย่างไรระหว่างนั้น ไม่มีโค้ด | รอ CR-07 |
-| REQ-OP-007 | ตาราง job_status_history ที่ feature นี้เขียน อยู่ในฐานข้อมูลเดียวที่ถูกสำรอง (D-00-02) การซ้อมกู้คืนต้องนับแถวประวัติที่หายด้วย ไม่ใช่เฉพาะการจอง | รอ CR-07 |
-| REQ-QA-010 | feature นี้เรียกระบบภายนอกตัวเดียวคือ IF-02 ผ่าน notify/queue.py (REQ-FN-053) timeout 10 วินาทีและส่งซ้ำทุก 5 นาที 6 ครั้ง (Q-40) ทำที่คิวเดิมของ 002 ที่เดียว สถานะงานต้องบันทึกสำเร็จแม้ IF-02 ไม่ตอบ (quality-requirements.md QAS-3) | รอ CR-07 |
-| REQ-SEC-010 | POST /jobs/{id}/status ตรวจ technician_id แล้วตอบ 404 (AC-09-06) GET /technicians/{id}/jobs รับ id ใดก็ได้เพราะยังไม่มี sign-in ต้องเพิ่มการบันทึกความพยายาม (ผู้ส่ง เวลา เลขงาน) ใน jobstatus/router.py และรหัสตอบ 403 หรือ 404 รอ Q-47 (ถ้า 403 ต้องมี CR แก้ AC-09-06 ก่อน) | รอ CR-07 |
-| REQ-SEC-011 | ไม่เกี่ยวกับ feature นี้ เพราะไม่มีการล็อกช่วงเวลา (ค้น "hold" ใน app/jobstatus ต้องไม่เจอ) | ไม่เกี่ยวกับ feature นี้ (รอ CR-07) |
-| REQ-PRV-010 | รายการงานของช่าง (customer_name ในข้อ 4) และข้อความแจ้งเตือนถึงลูกค้า ต้องแสดงรหัสลูกค้าแทนชื่อหลังลูกค้าขอลบ จุดที่ต้องแก้คือ list_jobs_for_technician ใน jobstatus/service.py ซึ่งอ่านชื่อจากตาราง customers ของ 002 ถ้า 002 ลบชื่อแล้ว feature นี้ได้ค่าว่าง ต้องตกลงว่าจะแสดงอะไร | รอ CR-07 |
-| REQ-CMP-001 | ไม่มีโค้ด REQ-PRV-002 ที่ feature นี้ใช้ (T-02, T-04) ต้องมีบรรทัด "ผลการตรวจโดยฝ่ายกฎหมาย" ตอนนี้คือ "รอการตรวจ" | รอ CR-07 |
+| REQ-OP-001 | เวลาล่มนับทั้งระบบ endpoint ของ feature นี้ (GET /technicians/{id}/jobs, POST /jobs/{id}/status, GET /jobs/{id}/history) อยู่ใต้ /health ตัวเดียวกับ 002 ไม่มี SLO เฉพาะของ feature จนกว่า Q-39 จะตอบ (ดู quality-requirements.md QAS-2) | ใช้แล้ว (T-09 AC-09-12 ย่อส่วน Q-39 ปิดแล้ว) |
+| REQ-OP-005 | middleware ตัวนับของ 002 คลุม router ของ jobstatus โดยอัตโนมัติ ไม่มีโค้ดเพิ่มใน feature นี้ แต่ต้องตรวจว่าชื่อ endpoint แยกกันในตัวนับ | ใช้แล้ว (middleware ของ 002 นับ POST /jobs/{job_id}/status แยกแล้ว T-11 เปลี่ยน log ของ router เป็น log_event) |
+| REQ-OP-006 | เหตุ "ฐานข้อมูลเต็ม" ทำให้ set_status บันทึกประวัติไม่ได้ ช่างกดแล้วได้ข้อผิดพลาด คู่มือใน docs/srs/operations.md เหตุการณ์ที่ 2 ต้องบอกว่าช่างควรทำอย่างไรระหว่างนั้น ไม่มีโค้ด | ใช้แล้ว (operations.md เหตุการณ์ที่ 2 ขั้นที่ 4 และเหตุการณ์ที่ 4) |
+| REQ-OP-007 | ตาราง job_status_history ที่ feature นี้เขียน อยู่ในฐานข้อมูลเดียวที่ถูกสำรอง (D-00-02) การซ้อมกู้คืนต้องนับแถวประวัติที่หายด้วย ไม่ใช่เฉพาะการจอง | ใช้แล้ว (AC-00-05 นับงาน คู่มือส่วนซ้อมกู้คืนนับแถวประวัติด้วย) |
+| REQ-QA-010 | feature นี้เรียกระบบภายนอกตัวเดียวคือ IF-02 ผ่าน notify/queue.py (REQ-FN-053) timeout 10 วินาทีและส่งซ้ำทุก 5 นาที 6 ครั้ง (Q-40) ทำที่คิวเดิมของ 002 ที่เดียว สถานะงานต้องบันทึกสำเร็จแม้ IF-02 ไม่ตอบ (quality-requirements.md QAS-3) | ใช้แล้ว (T-08 delivered_at และ Notifier, T-10 ส่งซ้ำทุก 5 นาที ไม่เกิน 6 ครั้ง ทำที่ notify/queue.py ที่เดียว) |
+| REQ-SEC-010 | POST /jobs/{id}/status ตรวจ technician_id แล้วตอบ 404 (AC-09-06) GET /technicians/{id}/jobs รับ id ใดก็ได้เพราะยังไม่มี sign-in ต้องเพิ่มการบันทึกความพยายาม (ผู้ส่ง เวลา เลขงาน) ใน jobstatus/router.py และรหัสตอบ 403 หรือ 404 รอ Q-47 (ถ้า 403 ต้องมี CR แก้ AC-09-06 ก่อน) | ใช้แล้ว (T-11 ตอบ 403 ตาม Q-47 แก้ AC-09-06 ใน CR-07 และบันทึกความพยายาม AC-09-14) GET /technicians/{id}/jobs ยังรับ id ใดก็ได้ รอ UC-01 (TH-01) |
+| REQ-SEC-011 | ไม่เกี่ยวกับ feature นี้ เพราะไม่มีการล็อกช่วงเวลา (ค้น "hold" ใน app/jobstatus ต้องไม่เจอ) | ไม่เกี่ยวกับ feature นี้ (ยืนยันหลัง CR-07) |
+| REQ-PRV-010 | รายการงานของช่าง (customer_name ในข้อ 4) และข้อความแจ้งเตือนถึงลูกค้า ต้องแสดงรหัสลูกค้าแทนชื่อหลังลูกค้าขอลบ จุดที่ต้องแก้คือ list_jobs_for_technician ใน jobstatus/service.py ซึ่งอ่านชื่อจากตาราง customers ของ 002 ถ้า 002 ลบชื่อแล้ว feature นี้ได้ค่าว่าง ต้องตกลงว่าจะแสดงอะไร | ใช้แล้ว (ตกลงใน EV-045: หลังลบ customers.name เป็น "ลูกค้า #รหัส" รายการงานของช่างแสดงค่านั้น ไม่ต้องแก้ jobstatus/service.py ข้อความแจ้งเตือนมีแค่เลขงานอยู่แล้ว) |
+| REQ-CMP-001 | ไม่มีโค้ด REQ-PRV-002 ที่ feature นี้ใช้ (T-02, T-04) ต้องมีบรรทัด "ผลการตรวจโดยฝ่ายกฎหมาย" ตอนนี้คือ "รอการตรวจ" | ใช้แล้ว (REQ-PRV-002 ตรวจโดย SH-05 แล้ว) |
+| REQ-SEC-012 (เพิ่มในประชุม EV-045) | endpoint ของ feature นี้ 3 ตัวอยู่ในบัญชี endpoint ของ operations.md ช่อง now= ของ POST /jobs/{id}/status ใช้ได้เฉพาะโหมด test | ใช้แล้ว |
 
 ## 6. แผนทดสอบจาก Acceptance Criteria
 
@@ -146,3 +149,26 @@ Constraint กลางจาก specs/000-shared/constraints.md รุ่น 1.
 - Q-32 ซ่อนงานที่ปิดแล้ว: รายการแสดงทุกงาน (AS-12) ไม่มีตัวกรอง จะยังไม่สร้างจนกว่าจะได้คำตอบ
 - Q-36 ย้าย REQ-SEC-004 ไปไฟล์กลาง: ไม่แตะไฟล์กลาง รอ RE lead
 - "เก็บประวัติ 24 เดือน" ของ REQ-DAT-002 ยังไม่มี AC และไม่มี task (rtm.md F-10)
+
+## 9. ปรับตาม CR-07 (plan v2, 24 ต.ค. 2569)
+
+ข้อ 1 ถึง 8 ไม่แก้
+
+### 9.1 โมเดลข้อมูล
+ไม่มีตารางใหม่ของ feature นี้ ข้อความในคิว (notify/queue.py ของ 002) เพิ่ม attempts, last_attempt_at, delivered_at, gave_up ตาราง security_events ใช้ร่วมกับทั้งระบบ
+
+### 9.2 API ที่เปลี่ยน
+| รายการ | เปลี่ยนอย่างไร | รองรับ |
+|---|---|---|
+| POST /jobs/{job_id}/status | ไม่ใช่งานของช่างหรือไม่มีงาน ตอบ 403 เหมือนกัน (เดิม 404 และไม่มีงานตอบ 404 "ไม่พบงาน") ตรวจสิทธิ์ก่อนตรวจชื่อสถานะ และบันทึกความพยายาม ส่งเบอร์ในคำตอบเมื่อไรบันทึก phone_revealed | REQ-SEC-010, AC-09-06, AC-09-14 |
+| GET /technicians/{technician_id}/jobs | บันทึก phone_revealed ของทุกงานที่มีเบอร์ในคำตอบ log เหลือรหัสช่างและจำนวน | REQ-SEC-010, REQ-OP-005 |
+| ตัวส่งข้อความ (queue.deliver_due) | ใหม่ เรียก IF-02 timeout 10 วินาที ส่งซ้ำทุก 5 นาที ไม่เกิน 6 ครั้ง งานเบื้องหลังเรียกทุก 1 นาที | REQ-QA-010, AC-09-11, AC-09-13 |
+
+### 9.3 แผนทดสอบที่เพิ่ม
+| AC | test | ตรวจอย่างไร |
+|---|---|---|
+| AC-09-06 (แก้) | test_AC_09_06_other_technician_cannot_change | assert 403 แทน 404 (CR-07 ตาราง test เดิมที่เปลี่ยน) |
+| AC-09-11 | test_AC_09_11_messages_accepted_by_if02_within_60s | FakeNotifier ตอบทันที ตรวจ delivered_at ห่างจากเวลากดไม่เกิน 60 วินาที (ย่อส่วน 3 ครั้ง) |
+| AC-09-12 | test_AC_09_12_status_change_under_load_scaled | 10 คำขอพร้อมกัน (ย่อจาก 50) |
+| AC-09-13 | test_AC_09_13_if02_down_status_saved_message_resent_once, test_AC_09_13_if02_down_beyond_retries_gives_up_after_6 | FakeNotifier(mode=down) เดินนาฬิกาทีละ 1 นาที |
+| AC-09-14 | test_AC_09_14_denied_status_change_logged_without_leaking_existence | 403 สองกรณี security_events 2 แถว |

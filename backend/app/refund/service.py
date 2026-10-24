@@ -1,16 +1,19 @@
 """REQ-BR-001 ยกเลิกงานและสร้างรายการคืนมัดจำตาม BR-01
 CR-06 (specs/004-cancel-refund): ฟังก์ชันเดียวนี้ใช้ทั้งทางลูกค้า (UC-08) และทางระบบ (UC-07 R4, R5)
 เพิ่ม: ส่งคำขอคืนเงินผ่าน Payment Gateway รายเดิม (REQ-IF-010, REQ-CON-003) ปล่อยช่วงเวลา (REQ-DAT-003)
-และแจ้งลูกค้ากับช่างภายใน 60 วินาที (REQ-FN-055)"""
+และแจ้งลูกค้ากับช่างภายใน 60 วินาที (REQ-FN-055)
+CR-07 (REQ-QA-010, Q-41, AC-08-08): gateway ไม่ตอบคำขอคืนเงินภายใน 30 วินาที บันทึก result = unknown พร้อม reference เดิม
+ไม่ส่งซ้ำเอง แจ้งลูกค้าว่ากำลังตรวจสอบ Finance ปิดรายการภายใน 1 วันทำการตามคู่มือเหตุการณ์ที่ 1"""
 from datetime import datetime
 
 from sqlalchemy import select
 
 from app.db.models import Job, Refund, Payment, set_status, SLOT_FREE
 from app.refund.rules import decide, Decision
-from app.payments.gateway import Gateway
+from app import config
+from app.payments.gateway import Gateway, GatewayTimeout
 from app.notify.queue import queue
-from app.privacy import get_logger
+from app.privacy import get_logger, log_event
 
 log = get_logger(__name__)  # REQ-PRV-002
 
@@ -24,6 +27,8 @@ class CancelRejected(Exception):
 MSG_R3_PENDING = "ยกเลิกขณะช่างกำลังเดินทางยังไม่เปิดให้ทำ กรุณาติดต่อ call center (รอ Q-14)"
 MSG_R6_NOT_ALLOWED = "งานที่กำลังดำเนินงานหรือเสร็จสิ้นแล้วยกเลิกไม่ได้ กรุณาใช้กระบวนการร้องเรียน"
 MSG_ALREADY_CLOSED = "งานนี้ถูกยกเลิกไปแล้ว"
+# CR-07 (AC-08-08): ข้อความถึงลูกค้าเมื่อ gateway ไม่ตอบคำขอคืนเงิน
+MSG_REFUND_CHECKING = "กำลังตรวจสอบการคืนเงิน"
 
 
 def quote(job: Job, cancelled_by: str, now: datetime) -> Decision:
@@ -51,12 +56,19 @@ def cancel_job(db, job: Job, cancelled_by: str, now: datetime,
         # รองรับ REQ-IF-010 / REQ-CON-003: คืนเงินผ่าน interface Gateway ตัวเดิม ด้วย reference ของการชำระที่สำเร็จ
         payment = db.scalars(select(Payment).where(Payment.job_id == job.id, Payment.result == "success")).first()
         if gateway is not None and payment is not None:
-            result = gateway.refund(payment.gateway_ref, d.refund_amount)
-            refund.gateway_ref, refund.result = payment.gateway_ref, result.status
-            log.info("refund job=%s rule=%s amount=%s result=%s", job.id, d.rule, d.refund_amount, result.status)
+            refund.gateway_ref = payment.gateway_ref
+            try:
+                result = gateway.refund(payment.gateway_ref, d.refund_amount,
+                                        timeout_seconds=config.GATEWAY_TIMEOUT_SECONDS)
+                refund.result = result.status
+            except GatewayTimeout:
+                refund.result = "unknown"  # CR-07 REQ-QA-010: ไม่รู้ผล ไม่ส่งซ้ำเอง (Q-41)
+            log_event(log, "refund_sent", job_id=job.id, rule=d.rule, amount=d.refund_amount, result=refund.result)
         db.add(refund)
     # รองรับ REQ-FN-055: แจ้งลูกค้าและช่างภายใน 60 วินาที (IF-02) ไม่รอผลส่ง
     refund_text = f" คืนมัดจำ {d.refund_amount} บาท" if d.refund_amount else ""
+    if refund is not None and refund.result == "unknown":
+        refund_text = f" {MSG_REFUND_CHECKING} {d.refund_amount} บาท"
     queue.enqueue("customer", job.customer_id, f"งาน #{job.id} ถูกยกเลิก{refund_text}", job.id, now)
     queue.enqueue("technician", job.technician_id, f"งาน #{job.id} ถูกยกเลิก ช่วงเวลากลับเป็นว่าง", job.id, now)
     db.commit()

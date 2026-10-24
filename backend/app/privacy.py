@@ -23,3 +23,30 @@ def get_logger(name: str) -> logging.Logger:
     if not any(isinstance(f, PhoneFilter) for f in logger.filters):
         logger.addFilter(PhoneFilter())
     return logger
+
+
+# ---- CR-07 REQ-OP-005 บรรทัดที่ 3: log แบบมีโครงสร้าง ห้ามมีเบอร์โทร ที่อยู่ และพิกัดของลูกค้า ----
+# ใช้รายการช่องที่อนุญาต (allowlist) แทนการไล่กรองทีหลัง ช่องที่ไม่อยู่ในรายการถูกทิ้งและนับไว้ใน dropped
+# เหตุผล: ที่อยู่และพิกัดไม่มีรูปแบบตายตัวแบบเบอร์โทร จึงกรองด้วย regex ไม่ได้ (GAP-22)
+import json
+
+ALLOWED_LOG_FIELDS = frozenset({
+    "event", "endpoint", "method", "status", "ms", "job_id", "customer_id", "technician_id",
+    "slot_id", "rule", "amount", "result", "count", "attempt", "reason", "actor_role", "actor_id",
+})
+
+
+def log_event(logger: logging.Logger, event: str, **fields) -> dict:
+    """เขียน log 1 บรรทัดเป็น JSON มีเฉพาะช่องใน ALLOWED_LOG_FIELDS คืน dict ที่เขียนจริง (ให้ test ตรวจได้)"""
+    record = {"event": event}
+    dropped = []
+    for key, value in fields.items():
+        if key in ALLOWED_LOG_FIELDS:
+            record[key] = value
+        else:
+            dropped.append(key)
+    if dropped:
+        record["dropped"] = sorted(dropped)
+    line = PHONE_PATTERN.sub("[phone]", json.dumps(record, ensure_ascii=False, default=str))
+    logger.info(line)
+    return record

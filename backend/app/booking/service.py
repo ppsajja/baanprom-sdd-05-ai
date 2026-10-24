@@ -1,11 +1,13 @@
 """REQ-FN-041 ล็อกช่วงเวลา | REQ-FN-008 สร้างงาน | UC-07 ขั้น 3, 5, 6 รวม E1, E2"""
 from datetime import datetime, timedelta
 
+from sqlalchemy import select
+
 from app import config
 from app.db.models import (TimeSlot, Job, Customer, ServiceAddress, set_status,
                            SLOT_FREE, SLOT_HELD, SLOT_BOOKED)
 from app.payments.gateway import Gateway
-from app.payments.service import charge_deposit
+from app.payments.service import charge_deposit, pending_payment_of, retry_pending
 from app.notify.queue import queue
 from app.technicians.service import release_expired_holds, find_alternatives
 
@@ -14,6 +16,18 @@ class SlotTaken(Exception):
     """UC-07 E2 ช่วงเวลาถูกลูกค้าอื่นจองหรือล็อกไปก่อน"""
     def __init__(self, alternatives: list[dict]):
         self.alternatives = alternatives
+
+
+class HoldLimitReached(Exception):
+    """CR-07 REQ-SEC-011: ลูกค้าคนนี้ถือล็อกที่ยังไม่หมดอายุอยู่ครบ HOLD_LIMIT_PER_CUSTOMER ช่วงแล้ว"""
+    def __init__(self, held: list[TimeSlot]):
+        self.held = held
+
+
+class PaymentPending(Exception):
+    """CR-07 REQ-QA-010: gateway ไม่ตอบทั้ง authorize และ status-inquiry งานยังเป็น "รอชำระเงิน" ช่วงเวลายังล็อกอยู่"""
+    def __init__(self, job: Job, slot: TimeSlot):
+        self.job, self.slot = job, slot
 
 
 class PaymentFailed(Exception):
@@ -27,6 +41,12 @@ def hold_slot(db, slot: TimeSlot, customer_id: int, now: datetime) -> TimeSlot:
     release_expired_holds(db, now)
     if slot.state == SLOT_BOOKED or (slot.state == SLOT_HELD and slot.held_by_customer_id != customer_id):
         raise SlotTaken(find_alternatives(db, slot, now, customer_id))
+    # รองรับ REQ-SEC-011 (CR-07): ล็อกช่วงอื่นที่ยังไม่หมดอายุของลูกค้าคนนี้ นับรวมแล้วต้องไม่เกินเพดาน
+    others = db.scalars(select(TimeSlot).where(TimeSlot.state == SLOT_HELD,
+                                               TimeSlot.held_by_customer_id == customer_id,
+                                               TimeSlot.id != slot.id)).all()
+    if len(others) >= config.HOLD_LIMIT_PER_CUSTOMER:
+        raise HoldLimitReached(others)
     slot.state = SLOT_HELD
     slot.held_by_customer_id = customer_id
     slot.hold_expires_at = now + timedelta(minutes=config.HOLD_MINUTES)
@@ -51,6 +71,12 @@ def create_booking(db, customer: Customer, slot: TimeSlot, address: ServiceAddre
                    category: str, gateway: Gateway, now: datetime) -> Job:
     """UC-07 ขั้น 5 ถึง 6: ตรวจล็อก สร้างงาน รอชำระเงิน ตัดมัดจำ แล้วยืนยันหรือยกเลิกอัตโนมัติ"""
     release_expired_holds(db, now)
+    # รองรับ REQ-QA-010 บรรทัดที่ 2 (CR-07, AC-07-13): ลูกค้ากดยืนยันซ้ำระหว่างที่การชำระยัง pending
+    # ใช้งานเดิมและ reference เดิม ไม่สร้างงานใหม่ ไม่ authorize ใหม่ (เหตุการณ์ B ตัดเงินซ้ำเพราะสร้างคำขอใหม่)
+    existing = db.scalars(select(Job).where(Job.customer_id == customer.id, Job.slot_id == slot.id,
+                                            Job.status == "pending_payment")).first()
+    if existing is not None and (payment := pending_payment_of(db, existing)) is not None:
+        return _finish_payment(db, existing, slot, customer, retry_pending(db, payment, gateway), now)
     # รองรับ AC-07-04 (E2): ถ้า slot ไม่ได้ล็อกโดยลูกค้าคนนี้ ไม่ตัดเงิน และเสนอช่วงใกล้เคียง
     if slot.state == SLOT_BOOKED or (slot.state == SLOT_HELD and slot.held_by_customer_id != customer.id):
         raise SlotTaken(find_alternatives(db, slot, now, customer.id))
@@ -65,6 +91,15 @@ def create_booking(db, customer: Customer, slot: TimeSlot, address: ServiceAddre
     set_status(db, job, "pending_payment", now)
 
     payment = charge_deposit(db, job, gateway, now)  # REQ-IF-001, REQ-IF-005
+    return _finish_payment(db, job, slot, customer, payment, now)
+
+
+def _finish_payment(db, job: Job, slot: TimeSlot, customer: Customer, payment, now: datetime) -> Job:
+    """ผลของการชำระ: สำเร็จ = ยืนยัน | pending = คงล็อกไว้ (CR-07) | ไม่สำเร็จ = ยกเลิกอัตโนมัติ (UC-07 E1)"""
+    if payment.result == "pending":
+        # รองรับ REQ-QA-010 บรรทัดที่ 3 (AC-07-12): ไม่ปล่อยช่วงเวลา ไม่ยกเลิก ไม่ต่ออายุล็อก (ครบ 10 นาทีตาม REQ-FN-041)
+        db.commit()
+        raise PaymentPending(job, slot)
     if payment.result == "success":
         # รองรับ REQ-FN-008 ขั้น 6: งานยืนยันแล้ว ช่วงเวลาจองแล้ว
         set_status(db, job, "confirmed", now)

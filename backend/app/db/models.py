@@ -26,6 +26,8 @@ class Customer(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(100))
     phone: Mapped[str] = mapped_column(String(20))  # PII REQ-PRV-002 ห้ามลง log
+    # CR-07 REQ-PRV-010: เวลาที่ลบเบอร์ ชื่อ ที่อยู่ และพิกัดแล้ว (None = ยังไม่ลบ) migration m002
+    erased_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
 
 class ServiceAddress(Base):
@@ -89,7 +91,7 @@ class Payment(Base):
     job_id: Mapped[int] = mapped_column(ForeignKey("jobs.id"))
     amount: Mapped[int] = mapped_column(Integer)
     gateway_ref: Mapped[str] = mapped_column(String(50))
-    result: Mapped[str] = mapped_column(String(10))  # success / failed / timeout
+    result: Mapped[str] = mapped_column(String(10))  # success / failed / timeout / pending (CR-07 REQ-QA-010 gateway ไม่ตอบเลย)
     authorized_at: Mapped[datetime] = mapped_column(DateTime)
 
 
@@ -100,8 +102,35 @@ class Refund(Base):
     amount: Mapped[int] = mapped_column(Integer)
     rule: Mapped[str] = mapped_column(String(5))  # R1..R6
     # CR-06 (REQ-IF-010): คำขอคืนเงินส่งผ่าน gateway ด้วย reference ของการชำระเดิม ผลเป็น approved / declined / not_sent
+    # CR-07 (REQ-QA-010, Q-41): gateway ไม่ตอบคำขอคืนเงิน ผลเป็น unknown ไม่ส่งซ้ำเอง Finance ปิดภายใน 1 วันทำการ
     gateway_ref: Mapped[str | None] = mapped_column(String(50), nullable=True)
     result: Mapped[str | None] = mapped_column(String(10), nullable=True)
+
+
+class SecurityEvent(Base):
+    """CR-07 REQ-SEC-010: บันทึกคำขอที่ถูกปฏิเสธสิทธิ์ (kind = denied) และการส่งเบอร์ลูกค้าให้ช่าง (kind = phone_revealed)
+    เก็บผู้ส่ง เลขงาน endpoint และเวลา ไม่เก็บเบอร์ ชื่อ หรือที่อยู่ (REQ-PRV-002)"""
+    __tablename__ = "security_events"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    kind: Mapped[str] = mapped_column(String(20))
+    actor_role: Mapped[str] = mapped_column(String(20))   # customer / technician
+    actor_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    job_id: Mapped[int | None] = mapped_column(Integer, nullable=True)  # ไม่ใช่ foreign key เพราะเลขที่ขออาจไม่มีจริง
+    endpoint: Mapped[str] = mapped_column(String(80))
+    at: Mapped[datetime] = mapped_column(DateTime)
+
+
+class ErasureRequest(Base):
+    """CR-07 REQ-PRV-010: คำขอลบข้อมูลของลูกค้า กำหนดเสร็จ = requested_at + 30 วัน (ค่าของบริษัท)
+    if02_* คือผลการส่งคำขอลบไปยังระบบส่งข้อความ (IF-02)"""
+    __tablename__ = "erasure_requests"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    customer_id: Mapped[int] = mapped_column(Integer)
+    requested_at: Mapped[datetime] = mapped_column(DateTime)
+    due_at: Mapped[datetime] = mapped_column(DateTime)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    if02_sent_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    if02_result: Mapped[str | None] = mapped_column(String(20), nullable=True)
 
 
 def set_status(db, job: Job, to_status: str, now: datetime) -> None:

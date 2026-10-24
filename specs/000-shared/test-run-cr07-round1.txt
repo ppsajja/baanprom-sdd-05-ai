@@ -1,0 +1,20 @@
+# ผลรันจริง รอบแรกหลังแก้โค้ดตาม CR-07 ก่อนแก้ test เดิม (หลักฐานตามกติกา Baseline ข้อ 8)
+# คำสั่ง: cd backend && python -m pytest -q -rf (Python 3.13 venv ในเครื่องที่รัน)
+# test ใหม่ของ CR-07 ยังไม่ได้เขียนในรอบนี้ ทั้ง 8 ตัวที่พังคือ test เดิมที่ CR-07 ระบุว่าต้องเปลี่ยน
+
+tests/test_refund.py:63: AssertionError
+=============================== warnings summary ===============================
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_cancel.py::test_AC_08_01_other_customer_cannot_see_or_cancel
+FAILED tests/test_job_status.py::test_AC_09_06_other_technician_cannot_change
+FAILED tests/test_refund.py::test_AC_07_10_refund[R1-confirmed-48-customer-cancelled-350]
+FAILED tests/test_refund.py::test_AC_07_10_refund[R2-confirmed-5-customer-cancelled-180]
+FAILED tests/test_refund.py::test_AC_07_10_refund[R4-rematching-20-system-cancelled-350]
+FAILED tests/test_refund.py::test_AC_07_10_refund[R5-pending_payment-30-system-auto_cancelled-0]
+FAILED tests/test_refund.py::test_AC_07_10_refund_R6_not_allowed - assert (40...
+FAILED tests/test_refund.py::test_AC_07_10_refund_R3_temporary_behaviour - as...
+8 failed, 33 passed, 1 skipped, 1 warning in 2.31s
+Python 3.13.16
+2026-10-24 10:46:17

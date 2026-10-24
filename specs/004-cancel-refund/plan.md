@@ -3,6 +3,8 @@
 อ้างอิง: spec.md SPEC-CANCEL v0.2 (หลัง /clarify) และ v1.0 (CR-06) | Updated: 2569-10-18 | สร้างด้วย /plan แล้วทีมตรวจแล้ว (plan v1, prompt-log.md #58)
 อ้างอิง Constraint กลาง: specs/000-shared/constraints.md รุ่น 1.0 (D-00-01 ถึง D-00-05 ใช้ตาม ไม่ถามซ้ำ)
 
+plan v2 (2569-10-24): CR-07 อนุมัติ แก้เฉพาะตารางข้อ 5 ส่วนรุ่น 1.1 และเพิ่มข้อ 9 ด้วยข้อความสั่งในแชต **ไม่ได้รัน /plan ใหม่** (prompt-log.md #70) อ้างอิง spec.md 1.1 และ Constraint กลางรุ่น 1.1
+
 ## 1. สรุปแนวทาง
 
 - ลูกค้ากรอกหมายเลขงาน ระบบตรวจว่าเป็นงานของลูกค้าคนนี้ แล้วแสดงยอดคืนจากตาราง BR-01 ตัวเดิม (refund/rules.py) ก่อนให้กดยืนยัน (REQ-FN-054, D-08-01, D-08-03)
@@ -95,15 +97,16 @@ Constraint กลางจาก specs/000-shared/constraints.md รุ่น 1.
 
 | Constraint ID | ถ้าอนุมัติ จะใช้ที่ไหนใน plan | สถานะ |
 |---|---|---|
-| REQ-OP-001 | เวลาล่มนับทั้งระบบ endpoint ของ feature นี้ (GET /jobs/{id}/refund-quote, POST /jobs/{id}/customer-cancel) อยู่ใต้ /health ตัวเดียวกับ 002 เวลาตอบของการยกเลิกรอ Q-42 (ดู quality-requirements.md QAS-3) | รอ CR-07 |
-| REQ-OP-005 | middleware ตัวนับของ 002 คลุม router ของ cancel โดยอัตโนมัติ คำขอคืนเงินที่ gateway ตอบ declined หรือไม่ตอบ ควรนับเป็น "ล้มเหลว" ของ endpoint นี้ด้วย เพื่อให้คนเวรรู้ก่อนลูกค้าโทร | รอ CR-07 |
-| REQ-OP-006 | เหตุ "gateway ไม่ตอบเกิน 5 นาที" กระทบ Gateway.refund ใน cancel_job (ข้อ 1) คู่มือใน docs/srs/operations.md เหตุการณ์ที่ 1 ต้องบอกว่าระหว่างนั้นรับยกเลิกต่อหรือหยุด และใครตัดสิน ไม่มีโค้ด | รอ CR-07 |
-| REQ-OP-007 | ตาราง refunds (รวม 2 คอลัมน์ใหม่ตาม CR-06) อยู่ในฐานข้อมูลเดียวที่ถูกสำรอง การซ้อมกู้คืนต้องเทียบ refunds.gateway_ref กับรายการฝั่ง gateway เพื่อหารายการที่หาย | รอ CR-07 |
-| REQ-QA-010 | Gateway.refund ในข้อ 1 ยังไม่มี timeout และยังไม่กำหนดว่าถ้าไม่ตอบต้องบันทึก Refund.result อะไร (Q-34, Q-41) reference เดิมและห้ามส่งซ้ำมีแล้วตาม REQ-IF-010 (AC-08-03, AC-08-04) IF-02 ใช้คิวเดิมของ 002 (quality-requirements.md QAS-1 และ QAS-2) | รอ CR-07 |
-| REQ-SEC-010 | POST /jobs/{id}/customer-cancel และ GET /jobs/{id}/refund-quote ตรวจ customer_id แล้วตอบ 404 (AC-08-01) ต้องเพิ่มการบันทึกความพยายามใน cancel/router.py และรหัสตอบ 403 หรือ 404 รอ Q-47 (ถ้า 403 ต้องมี CR แก้ AC-08-01 ก่อน) MU-01 ใน CR-07 เล่าเหตุนี้ผ่าน POST /jobs/{id}/cancel ของ 002 ซึ่งไม่ใช่ endpoint ของ feature นี้ | รอ CR-07 |
-| REQ-SEC-011 | ไม่เกี่ยวกับ feature นี้ เพราะ feature นี้ปล่อยช่วงเวลาให้กลับเป็น "ว่าง" (REQ-DAT-003) ไม่ได้ล็อกช่วงเวลา | ไม่เกี่ยวกับ feature นี้ (รอ CR-07) |
-| REQ-PRV-010 | ไม่เกี่ยวกับ feature นี้ เพราะไม่มีข้อมูลส่วนบุคคลใหม่ (spec ส่วน 7) ตาราง refunds อ้างงานด้วย job_id ไม่มีชื่อหรือเบอร์ การลบทำที่ตาราง customers ของ 002 | ไม่เกี่ยวกับ feature นี้ (รอ CR-07) |
-| REQ-CMP-001 | ไม่มีโค้ด REQ-PRV-002 ที่ feature นี้ใช้ (T-02, T-03) ต้องมีบรรทัด "ผลการตรวจโดยฝ่ายกฎหมาย" ตอนนี้คือ "รอการตรวจ" | รอ CR-07 |
+| REQ-OP-001 | เวลาล่มนับทั้งระบบ endpoint ของ feature นี้ (GET /jobs/{id}/refund-quote, POST /jobs/{id}/customer-cancel) อยู่ใต้ /health ตัวเดียวกับ 002 เวลาตอบของการยกเลิกรอ Q-42 (ดู quality-requirements.md QAS-3) | ใช้แล้ว (T-09 AC-08-09 ย่อส่วน Q-42 ปิดแล้ว) |
+| REQ-OP-005 | middleware ตัวนับของ 002 คลุม router ของ cancel โดยอัตโนมัติ คำขอคืนเงินที่ gateway ตอบ declined หรือไม่ตอบ ควรนับเป็น "ล้มเหลว" ของ endpoint นี้ด้วย เพื่อให้คนเวรรู้ก่อนลูกค้าโทร | ใช้แล้ว (middleware ของ 002 นับ endpoint นี้แยก T-10 log เป็น log_event) คำขอคืนเงินที่ไม่ตอบไม่นับเป็นล้มเหลวของ endpoint เพราะลูกค้าได้ 200 นับจาก refunds.result = unknown แทน (คู่มือเหตุการณ์ที่ 1) |
+| REQ-OP-006 | เหตุ "gateway ไม่ตอบเกิน 5 นาที" กระทบ Gateway.refund ใน cancel_job (ข้อ 1) คู่มือใน docs/srs/operations.md เหตุการณ์ที่ 1 ต้องบอกว่าระหว่างนั้นรับยกเลิกต่อหรือหยุด และใครตัดสิน ไม่มีโค้ด | ใช้แล้ว (operations.md เหตุการณ์ที่ 1 ส่วนการคืนเงิน: รับยกเลิกต่อ Finance ปิดรายการ unknown ภายใน 1 วันทำการ Q-41) |
+| REQ-OP-007 | ตาราง refunds (รวม 2 คอลัมน์ใหม่ตาม CR-06) อยู่ในฐานข้อมูลเดียวที่ถูกสำรอง การซ้อมกู้คืนต้องเทียบ refunds.gateway_ref กับรายการฝั่ง gateway เพื่อหารายการที่หาย | ใช้แล้ว (คู่มือส่วนซ้อมกู้คืนเทียบ refunds.gateway_ref กับรายการฝั่ง gateway) |
+| REQ-QA-010 | Gateway.refund ในข้อ 1 ยังไม่มี timeout และยังไม่กำหนดว่าถ้าไม่ตอบต้องบันทึก Refund.result อะไร (Q-34, Q-41) reference เดิมและห้ามส่งซ้ำมีแล้วตาม REQ-IF-010 (AC-08-03, AC-08-04) IF-02 ใช้คิวเดิมของ 002 (quality-requirements.md QAS-1 และ QAS-2) | ใช้แล้ว (T-08 Gateway.refund มี timeout_seconds ไม่ตอบบันทึก unknown ไม่ส่งซ้ำ AC-08-08, T-07 AC-08-07) |
+| REQ-SEC-010 | POST /jobs/{id}/customer-cancel และ GET /jobs/{id}/refund-quote ตรวจ customer_id แล้วตอบ 404 (AC-08-01) ต้องเพิ่มการบันทึกความพยายามใน cancel/router.py และรหัสตอบ 403 หรือ 404 รอ Q-47 (ถ้า 403 ต้องมี CR แก้ AC-08-01 ก่อน) MU-01 ใน CR-07 เล่าเหตุนี้ผ่าน POST /jobs/{id}/cancel ของ 002 ซึ่งไม่ใช่ endpoint ของ feature นี้ | ใช้แล้ว (T-10 ตอบ 403 และบันทึก AC-08-10 ตาม MU-01 AC-08-01 ข้อความไม่เปลี่ยน test เปลี่ยน assert) POST /jobs/{id}/cancel ของ 002 ถูกปิด (T-21 ของ 002) ทางยกเลิกของลูกค้าเหลือ endpoint ของ feature นี้ทางเดียว |
+| REQ-SEC-011 | ไม่เกี่ยวกับ feature นี้ เพราะ feature นี้ปล่อยช่วงเวลาให้กลับเป็น "ว่าง" (REQ-DAT-003) ไม่ได้ล็อกช่วงเวลา | ไม่เกี่ยวกับ feature นี้ (ยืนยันหลัง CR-07) |
+| REQ-PRV-010 | ไม่เกี่ยวกับ feature นี้ เพราะไม่มีข้อมูลส่วนบุคคลใหม่ (spec ส่วน 7) ตาราง refunds อ้างงานด้วย job_id ไม่มีชื่อหรือเบอร์ การลบทำที่ตาราง customers ของ 002 | ไม่เกี่ยวกับ feature นี้ (ยืนยันหลัง CR-07) |
+| REQ-CMP-001 | ไม่มีโค้ด REQ-PRV-002 ที่ feature นี้ใช้ (T-02, T-03) ต้องมีบรรทัด "ผลการตรวจโดยฝ่ายกฎหมาย" ตอนนี้คือ "รอการตรวจ" | ใช้แล้ว (REQ-PRV-002 ตรวจโดย SH-05 แล้ว) |
+| REQ-SEC-012 (เพิ่มในประชุม EV-045) | endpoint ของ feature นี้ 2 ตัวอยู่ในบัญชี endpoint ของ operations.md ช่อง now= ใช้ได้เฉพาะโหมด test | ใช้แล้ว |
 
 ## 6. แผนทดสอบจาก Acceptance Criteria
 
@@ -142,3 +145,27 @@ Constraint กลางจาก specs/000-shared/constraints.md รุ่น 1.
 - Q-33 คิวรอ (waitlist) ใน UC-07 A1 ยังไม่มีรหัส UC (UC-07.md แก้ให้ไม่ใช้ UC-08 แล้ว): รอ RE lead ตัดสินว่าจะเป็น UC ใหม่หรือไม่
 - Q-34 gateway ปฏิเสธคำขอคืนเงิน: บันทึกผลลง Refund.result ไม่ส่งซ้ำ ไม่มี AC ไม่มี test ส่วนนี้จะยังไม่สร้างจนกว่าจะได้คำตอบ
 - Q-35 ช่องทางและจำนวนวันที่เงินคืนเข้า: หน้าจอไม่แสดงจำนวนวัน จะยังไม่สร้างจนกว่าจะได้คำตอบ
+
+## 9. ปรับตาม CR-07 (plan v2, 24 ต.ค. 2569)
+
+ข้อ 1 ถึง 8 ไม่แก้
+
+### 9.1 โมเดลข้อมูล
+refunds.result เพิ่มค่า unknown (gateway ไม่ตอบคำขอคืนเงินภายใน 30 วินาที) ไม่มีคอลัมน์ใหม่
+
+### 9.2 API ที่เปลี่ยน
+| รายการ | เปลี่ยนอย่างไร | รองรับ |
+|---|---|---|
+| GET /jobs/{job_id}/refund-quote, POST /jobs/{job_id}/customer-cancel | ไม่ใช่งานของลูกค้าหรือไม่มีงาน ตอบ 403 เหมือนกัน (เดิม 404) และบันทึกความพยายาม | REQ-SEC-010, AC-08-01, AC-08-10 |
+| POST /jobs/{job_id}/customer-cancel | refund_result เป็น unknown เมื่อ gateway ไม่ตอบ ข้อความถึงลูกค้าบอก "กำลังตรวจสอบการคืนเงิน" | REQ-QA-010, AC-08-08 |
+| Gateway.refund | เพิ่มพารามิเตอร์ timeout_seconds (ค่าเดียวกับ GATEWAY_TIMEOUT_SECONDS) | REQ-QA-010 |
+| หน้ายกเลิก UI-08-01 | ได้ 403 แสดง "ไม่พบงานหมายเลขนี้" เหมือนสถานะ 3 เดิม | AC-08-10 (หน้าจอ) |
+
+### 9.3 แผนทดสอบที่เพิ่ม
+| AC | test | ตรวจอย่างไร |
+|---|---|---|
+| AC-08-01 (assert เปลี่ยน) | test_AC_08_01_other_customer_cannot_see_or_cancel | assert 403 แทน 404 |
+| AC-08-07 | test_AC_08_07_two_concurrent_cancels_refund_once | 2 thread พร้อมกัน บน SQLite ผ่านโดยโครงสร้าง (GAP-15) |
+| AC-08-08 | test_AC_08_08_refund_timeout_recorded_unknown_not_resent | FakeGateway(refund_mode=timeout) |
+| AC-08-09 | test_AC_08_09_cancel_under_load_scaled | 10 คำขอพร้อมกัน (ย่อจาก 50) |
+| AC-08-10 | test_AC_08_10_customer_cannot_cancel_other_customers_job, AC-08-10.test.jsx | ลูกค้า A ยกเลิกงาน B ได้ 403 งาน B ไม่เปลี่ยน บันทึก 1 แถว |

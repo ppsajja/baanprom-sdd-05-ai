@@ -120,6 +120,7 @@ def test_AC_08_06_not_cancellable_returns_message(client, db, seed, gateway, sta
 def test_AC_08_01_other_customer_cannot_see_or_cancel(client, db, seed, gateway):
     job = confirmed_job(client, db, seed)
     now = job.scheduled_start - timedelta(hours=48)
-    assert quote(client, job.id, seed["other"].id, now).status_code == 404
-    assert cancel(client, job.id, seed["other"].id, now).status_code == 404
+    # CR-07 (Q-47, GAP-23): รหัสตอบเปลี่ยนจาก 404 เป็น 403 ตาม REQ-SEC-010 ข้อความของ AC-08-01 ไม่เปลี่ยน
+    assert quote(client, job.id, seed["other"].id, now).status_code == 403
+    assert cancel(client, job.id, seed["other"].id, now).status_code == 403
     db.refresh(job); assert job.status == "confirmed"

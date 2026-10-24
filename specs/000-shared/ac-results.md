@@ -1,0 +1,30 @@
+# ตารางผล AC ของข้อกำหนดข้ามทุก feature (specs/000-shared/cross-cutting.feature)
+
+ไฟล์ใหม่ใน CR-07 (24 ต.ค. 2569) ผลรันจริงอยู่ที่ specs/000-shared/test-run.txt ไฟล์เดียวทั้งโครงการ
+คำสั่ง: cd backend && pytest -v -k "AC_" | cd frontend && npx vitest run
+สถานะที่ใช้: ผ่าน | ไม่ผ่าน | ยังไม่มี test | ตรวจด้วยคน
+
+## รอบ CR-07 (24 ต.ค. 2569)
+
+| AC ID | REQ ที่พิสูจน์ | test | task | ผล | หมายเหตุ |
+|---|---|---|---|---|---|
+| AC-00-01 | REQ-OP-005 | test_AC_00_01_metrics_per_endpoint_per_minute | T-24 ของ 002 | ผ่าน | |
+| AC-00-02 | REQ-OP-005 | test_AC_00_02_page_on_call_after_5_failing_minutes | T-24 ของ 002 | ผ่าน (นาฬิกาจำลอง) | การส่งถึงคนเวรจริงตรวจบนระบบจริง ช่องทางยังไม่เลือก (GAP-28) |
+| AC-00-03 | REQ-OP-005, REQ-PRV-002 | test_AC_00_03_structured_log_without_pii | T-24 ของ 002 | ผ่าน | ค้นเบอร์ ชื่อ ที่อยู่ และพิกัดใน log ของทุกโมดูล app. |
+| AC-00-04 | REQ-OP-001 | test_AC_00_04_health_and_ready | T-24 ของ 002 | ผ่าน | ส่วน "ล่มไม่เกิน 4 ชั่วโมงต่อเดือน" วัดบนระบบจริงรายเดือน |
+| AC-00-05 | REQ-OP-007 | test_AC_00_05_backup_restore_drill_within_rpo | T-23 ของ 002 | ผ่าน (ย่อส่วนบน SQLite) | ไม่ใช่การซ้อมจริง ซ้อมบน PostgreSQL ก่อนเปิด R1 (เงื่อนไขของ CR-07) |
+| AC-00-06 | REQ-SEC-012 | test_AC_00_06_production_hides_docs_and_guards_ops_endpoints | T-24 ของ 002 | ผ่าน | สร้างแอปในโหมด production ภายใน test |
+| AC-00-07 | REQ-SEC-012 | test_AC_00_07_now_parameter_ignored_outside_test_mode | T-24 ของ 002 | ผ่าน | |
+| AC-00-08 | REQ-SEC-010 บรรทัดที่ 3 | test_AC_00_08_page_when_one_actor_denied_over_20_in_10_minutes | T-24 ของ 002 | ผ่าน | |
+| REQ-OP-006 | REQ-OP-006 | ไม่มี test | T-25 ของ 002 | ตรวจด้วยคน: ผ่าน (เหตุการณ์ที่ 1 ถึง 3) | walkthrough ใน EV-045 เหตุการณ์ที่ 4 และ 5 ยังไม่ได้ตรวจ |
+| REQ-CMP-001 | REQ-CMP-001 | ไม่มี test | | ตรวจด้วยคน: ผ่าน | SH-05 ตรวจตามรายการ PDPA 5 ข้อ (EV-045) |
+
+## รวมทั้งโครงการรอบนี้
+
+| | B2 ปรับปรุง (18 ต.ค.) | B3 (24 ต.ค. หลัง CR-07) |
+|---|---|---|
+| AC ในสเปก | 27 (11 + 10 + 6) | 50 (18 + 14 + 10 + 8 ข้ามทุก feature) |
+| test หลังบ้าน | 41 ผ่าน 1 ข้าม | 66 ผ่าน 1 ข้าม |
+| test หน้าจอ | 27 ผ่าน (14 ไฟล์) | 31 ผ่าน (17 ไฟล์) |
+| test เดิมที่ต้องเปลี่ยนเพราะ CR | | 8 ตัว ตามตารางใน CR-07 (ไม่มีตัวอื่น) |
+| ข้อค้นพบและช่องว่างที่เปิด | F-05, F-06, F-07, F-09, F-10, F-11, F-13, F-14 | เดิมทั้งหมด และ GAP-24, GAP-26, GAP-28 |

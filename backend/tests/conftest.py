@@ -1,6 +1,10 @@
 """เตรียมฐานข้อมูล SQLite ในหน่วยความจำ, FakeGateway, และข้อมูลตั้งต้นตาม Background ใน booking.feature
 ทุก test เริ่มจากสภาพเดียวกัน: ลูกค้า สมชาย, ช่าง ประสิทธิ์ (ประปา) มีช่วงเวลา พรุ่งนี้ 14:00-16:00 ว่าง"""
+import os
 from datetime import datetime, timedelta
+
+# CR-07 REQ-SEC-012: ช่อง now= ใช้ได้เฉพาะโหมด test (ค่าตั้งต้นของระบบคือ production) ต้องตั้งก่อน import app
+os.environ["APP_ENV"] = "test"
 
 import pytest
 from fastapi.testclient import TestClient

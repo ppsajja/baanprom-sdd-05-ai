@@ -1,8 +1,8 @@
 # SPEC-JOB-STATUS | ช่างอัปเดตสถานะงานภาคสนาม (UC-09)
 
-version: 1.0 | status: baselined (B2) | owner: กลุ่ม X / PO: SH-01 | date: 2569-10-18
-baseline: B2 (ปรับปรุง 2569-10-18) เข้าด้วย CR-05 | supersedes: v0.2 | related: SPEC-BOOKING (specs/002-booking, B2), SPEC-CANCEL (specs/004-cancel-refund, B2) | feature file: job-status.feature v1.0
-Constraint กลาง: specs/000-shared/constraints.md รุ่น 1.0 | mockups: UI-09-01, UI-09-02
+version: 1.1 | status: baselined (B3) | owner: กลุ่ม X / PO: SH-01 | date: 2569-10-24
+baseline: B3 (2569-10-24) = B2 + CR-07 (เข้า B2 ด้วย CR-05) | supersedes: v1.0 | related: SPEC-BOOKING (specs/002-booking, B2), SPEC-CANCEL (specs/004-cancel-refund, B2) | feature file: job-status.feature v1.1
+Constraint กลาง: specs/000-shared/constraints.md รุ่น 1.1 | mockups: UI-09-01, UI-09-02
 
 ## Change Log
 
@@ -11,6 +11,7 @@ Constraint กลาง: specs/000-shared/constraints.md รุ่น 1.0 | mock
 | 0.1 | 2569-10-11 | ร่างแรก ส่วน 8 ใช้บรรทัดอ้าง Constraint กลางตั้งแต่ต้น | เริ่ม feature ที่สอง (ที่มาของ CR-04) | กลุ่ม X |
 | 0.2 | 2569-10-18 | /clarify: เติมส่วน 4 (REQ-FN-050 ถึง 053 จาก EV-044) เขียน UC-09 แบบ fully dressed เพิ่ม AC-09-01 ถึง 10 เพิ่ม Q-31, Q-32, AS-11, AS-12 เพิ่มส่วน 12 (UI-09-01, UI-09-02) | AI ถาม 6 ข้อ ทีมตอบได้ 4 ข้อ ต้องถามต่อ 2 ข้อ (prompt-log.md #46) | AI ร่าง, ทีมตรวจ |
 | 1.0 | 2569-10-18 | CR-05: เข้า Baseline B2 พร้อม REQ ใหม่ 4 ข้อ AC 10 ข้อ หน้าจอ 2 หน้า และ AC ของ REQ-DAT-002 ที่ 002-booking ขาด (ปิด F-08) | R1 ต้องมีสถานะงานที่ลูกค้าเห็นเอง (EV-012, EV-044) | กลุ่ม X, SH-01 อนุมัติ |
+| 1.1 | 2569-10-24 | CR-07: อ้าง Constraint กลางรุ่น 1.1 แก้บรรทัด Then ของ AC-09-06 (403 ตาม Q-47) เพิ่ม AC-09-11 ถึง AC-09-14 ปิด Q-38, Q-39 | รอบ Failure Day และประชุมทบทวน EV-045 | กลุ่ม X, SH-01 อนุมัติ |
 
 ## 1. Intent
 
@@ -57,7 +58,7 @@ Non-goals (R1):
 
 ## 6. Acceptance Criteria
 
-ไฟล์ job-status.feature v1.0 (AC-09-01 ถึง AC-09-10)
+ไฟล์ job-status.feature v1.1 (AC-09-01 ถึง AC-09-14 AC-09-06 แก้บรรทัด Then ตาม CR-07 AC-09-11 ถึง 14 เพิ่มตาม CR-07 จากไฟล์กลางส่วน 6: REQ-FN-053 และ REQ-QA-010 = AC-09-11, AC-09-13 | REQ-OP-001 = AC-09-12 | REQ-SEC-010 = AC-09-06, AC-09-14)
 ครบเมื่อ: ทุก path ใน UC-09 มี scenario | ทุกลูกศรฝั่งช่างใน BR-04 มี scenario | ลูกศรที่ไม่อนุญาตมี example | ไม่มี Then ที่มองไม่เห็นจากภายนอก
 ยังไม่ครบ: "เก็บประวัติ 24 เดือน" ของ REQ-DAT-002 ยังไม่มี AC เพราะทดสอบในสภาพแวดล้อมของนักศึกษาไม่ได้ (rtm.md F-10)
 
@@ -69,7 +70,7 @@ Customer.phone เป็น PII (REQ-PRV-002) ส่งให้ช่างเ�
 
 ## 8. Constraints
 
-Constraint กลาง: ใช้ทุกข้อใน specs/000-shared/constraints.md รุ่น 1.0 (ห้ามคัดลอกข้อความมาไว้ที่นี่)
+Constraint กลาง: ใช้ทุกข้อใน specs/000-shared/constraints.md รุ่น 1.1 (ห้ามคัดลอกข้อความมาไว้ที่นี่) (เดิมรุ่น 1.0 เปลี่ยนตาม CR-07)
 ข้อยกเว้นของ feature นี้: ไม่มี
 เฉพาะ feature นี้:
 - REQ-SEC-004 ช่างเห็นเบอร์ลูกค้าเฉพาะ 2 ชั่วโมงก่อนนัดจนปิดงาน (ข้อความเต็มอยู่ใน catalogue และอยู่ในส่วน 4 ใช้ร่วมกับ SPEC-BOOKING รอย้ายไปไฟล์กลาง Q-36)
@@ -82,8 +83,8 @@ Constraint กลาง: ใช้ทุกข้อใน specs/000-shared/cons
 | Q-31 | MD-STM-01 เขียนว่า "เสร็จสิ้น" ต้องมี "ลูกค้ายืนยัน" ด้วย ลูกค้ายืนยันที่ไหน และถ้าไม่ยืนยันจะเป็นอย่างไร | SH-01 | 25 ต.ค. | ช่างกดปิดงานแล้วเป็น "เสร็จสิ้น" ทันที (AS-11) หน้าจอลูกค้าไม่มีปุ่มยืนยัน |
 | Q-32 | รายการงานของช่างต้องซ่อนงานที่ปิดแล้วหรือแสดงย้อนหลังกี่วัน | Ops lead | 25 ต.ค. | แสดงทุกงานของช่างเรียงตามเวลานัด (AS-12) |
 | Q-36 | REQ-SEC-004 มี feature ที่สองใช้แล้ว ควรย้ายไปไฟล์กลางตามข้อ 4 ของไฟล์กลางไหม | RE lead | 25 ต.ค. | คงไว้ในส่วน 4 และ 8 ของทั้งสอง spec ข้อความเดียวกัน |
-| Q-38 | สัดส่วนข้อความแจ้งสถานะที่ต้องถึงลูกค้า (IF-02 ตอบรับ) ภายใน 60 วินาที ยอมรับที่เท่าไร ทีมเสนอ 95 ใน 100 (quality-requirements.md QAS-1 เพิ่มในรอบ Failure Day ผ่าน CR-07) | Ops lead | ก่อนอนุมัติ CR-07 | AC-09-08 ตรวจเฉพาะเวลานัดส่ง ยังไม่วัดการถึงจริง |
-| Q-39 | เวลาตอบของ POST /jobs/{id}/status และจำนวนช่างที่กดพร้อมกันสูงสุด ทีมเสนอ p95 1 วินาที ที่ 50 คน (quality-requirements.md QAS-2 เพิ่มในรอบ Failure Day ผ่าน CR-07) | SH-06 กับ Ops lead | ก่อนอนุมัติ CR-07 | ไม่มี SLO เฉพาะ ใช้ REQ-OP-001 ทั้งระบบเมื่ออนุมัติ |
+| Q-38 | สัดส่วนข้อความแจ้งสถานะที่ต้องถึงลูกค้า (IF-02 ตอบรับ) ภายใน 60 วินาที ยอมรับที่เท่าไร ทีมเสนอ 95 ใน 100 (quality-requirements.md QAS-1 เพิ่มในรอบ Failure Day ผ่าน CR-07) | Ops lead | ปิดแล้ว 24 ต.ค. (EV-045) | คำตอบ: รับ 95 ใน 100 เป็นระดับต่ำสุด เป้าหมาย 99 ใน 100 วัดจาก delivered_at (AC-09-11) |
+| Q-39 | เวลาตอบของ POST /jobs/{id}/status และจำนวนช่างที่กดพร้อมกันสูงสุด ทีมเสนอ p95 1 วินาที ที่ 50 คน (quality-requirements.md QAS-2 เพิ่มในรอบ Failure Day ผ่าน CR-07) | SH-06 กับ Ops lead | ปิดแล้ว 24 ต.ค. (EV-045) | คำตอบ: ช่างไม่เกิน 50 คนในปีแรก กดพร้อมกันมากสุดช่วง 8 โมง รับ p95 ไม่เกิน 1 วินาที (AC-09-12) |
 | AS-11 | "ปิดงาน" โดยช่างเพียงพอให้เป็น "เสร็จสิ้น" (ทีมตัดสินใจเอง ตอน /clarify ยังไม่ยืนยันกับ SH-01) | | | POST /jobs/{id}/status ไป done ได้จาก in_progress |
 | AS-12 | รายการงานของช่างแสดงทุกงานรวมที่ปิดแล้ว ไม่กรอง (ทีมตัดสินใจเอง) | | | GET /technicians/{id}/jobs ไม่มีตัวกรอง |
 
@@ -99,6 +100,7 @@ Constraint กลาง: ใช้ทุกข้อใน specs/000-shared/cons
 
 - v0.1: ทีมเขียนเอง ลองรัน /plan หนึ่งครั้งแล้วหยุด (prompt-log.md #37)
 - v0.2: /clarify ร่างส่วน 4, 6, 9, 12 และ UC-09.md จาก EV-044 (prompt-log.md #46) รอบนี้ผู้สอนเดโมด้วย Claude Code และตอบคำถามแทนทีม ทุกคำตอบที่เป็นการตัดสินใจเองติดป้าย AS-xx หรือ D-09-xx
+- 1.1: AI ย้าย AC-09-11 ถึง 13 จาก quality-requirements.md เข้า job-status.feature (AC-09-13 แก้ตัวเลขการจำลองตามประชุม) และร่าง AC-09-14 ทีมตรวจ (prompt-log.md #69 ถึง #71)
 - plan.md และ tasks.md ร่างด้วย /plan และ /tasks (prompt-log.md #47, #48) ไม่ถามเรื่องเทคโนโลยีซ้ำ เพราะมี D-00-01 ถึง D-00-05 ในไฟล์กลาง
 - โค้ดและ test สร้างด้วย /implement T-01 ถึง T-07 (prompt-log.md #49 ถึง #55) ทุก task ผ่านการตรวจ 5 ข้อ task หน้าจอผ่านการตรวจเทียบ mockup 6 ข้อ
 - mockup 2 หน้า: ทีมร่างกับ SH-01 และ SH-06 (EV-044) แล้วให้ AI แปลงเป็น HTML ตาม docs/mockup-template.html สิ่งที่ถูกตัดออกหลัง /clarify: ปุ่ม "ยกเลิกงาน" ฝั่งช่าง (ไม่มี REQ และเป็นของ UC-08) และปุ่มโทรหาลูกค้าก่อน 2 ชั่วโมง (ขัด REQ-SEC-004)

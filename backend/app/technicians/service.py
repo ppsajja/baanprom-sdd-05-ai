@@ -5,7 +5,7 @@ import math
 from sqlalchemy import select
 
 from app import config
-from app.db.models import Technician, TimeSlot, ServiceAddress, SLOT_FREE, SLOT_HELD, SLOT_BOOKED
+from app.db.models import Technician, TimeSlot, ServiceAddress, Job, SLOT_FREE, SLOT_HELD, SLOT_BOOKED
 
 
 def distance_km(lat1, lng1, lat2, lng2) -> float:
@@ -19,9 +19,16 @@ def distance_km(lat1, lng1, lat2, lng2) -> float:
 
 def release_expired_holds(db, now: datetime) -> None:
     # รองรับ AS-07: ล็อกหมดอายุเองโดยไม่ต้องมีใครปลด ตรวจทุกครั้งที่อ่าน slot
-    for slot in db.scalars(select(TimeSlot).where(TimeSlot.state == SLOT_HELD)):
+    # CR-07 REQ-QA-010: ถ้าช่วงนั้นมีงาน "รอชำระเงิน" ที่การชำระยัง pending (gateway ไม่ตอบ) ให้ปิดเรื่องเงินก่อนปล่อยช่วง
+    from app.payments.service import settle_on_hold_expiry
+    from app.payments.gateway import get_gateway
+    for slot in db.scalars(select(TimeSlot).where(TimeSlot.state == SLOT_HELD)).all():
         if slot.hold_expires_at and slot.hold_expires_at <= now:
+            pending_job = db.scalars(select(Job).where(Job.slot_id == slot.id, Job.status == "pending_payment")).first()
+            if pending_job is not None and settle_on_hold_expiry(db, pending_job, slot, get_gateway(), now):
+                continue
             slot.state, slot.held_by_customer_id, slot.hold_expires_at = SLOT_FREE, None, None
+    db.flush()  # CR-07: คำค้นถัดไป (เช่น นับล็อกของลูกค้าใน REQ-SEC-011) ต้องเห็นล็อกที่เพิ่งปล่อย (autoflush ปิดอยู่)
 
 
 def slot_visible_to(slot: TimeSlot, customer_id: int | None) -> bool:

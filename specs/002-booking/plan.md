@@ -3,6 +3,7 @@
 อ้างอิง: spec.md SPEC-BOOKING v1.1 (B1 + v2 หลัง /clarify) | Updated: 2569-10-04 | สร้างด้วย /plan แล้วทีมตรวจแล้ว (plan v1)
 หลังจากนั้น: ข้อ 5 เพิ่มแถว REQ-IF-005 "ใช้แล้ว" เมื่อ Q-19 มีค่าชั่วคราว (แก้โดยทีม 4 ต.ค.)
 plan v2 (2569-10-11): แก้เฉพาะข้อ 2, 4, 5, 6, 7, 8 ตาม CR-03 และ CR-04 ด้วยข้อความสั่งในแชต **ไม่ได้รัน /plan ใหม่** (prompt-log.md #39) อ้างอิง spec.md 1.4 และ Constraint กลางรุ่น 1.0
+plan v3 (2569-10-24): CR-07 อนุมัติ แก้เฉพาะตารางข้อ 5 ส่วน "รุ่น 1.1" และเพิ่มข้อ 9 ด้วยข้อความสั่งในแชต **ไม่ได้รัน /plan ใหม่** (prompt-log.md #70) อ้างอิง spec.md 1.5 และ Constraint กลางรุ่น 1.1
 
 ## 1. สรุปแนวทาง
 
@@ -132,18 +133,20 @@ Constraint กลางจาก specs/000-shared/constraints.md รุ่น 1.
 | D-00-05 | ข้อ 4: ยอดมัดจำและเวลาสิ้นสุดการล็อกมาจาก API ตัวเลขอยู่ใน config.py | ใช้แล้ว (T-12, T-13) |
 
 ข้อเสนอ Constraint กลางรุ่น 1.1 (specs/000-shared/constraints.md ส่วน 6, CR-07 สถานะ Proposed) เพิ่มแถวไว้ให้ Impact Analysis มองเห็น ยังไม่มี task โค้ด หรือ test จนกว่า CR-07 จะอนุมัติ (เพิ่มในรอบ Failure Day ไม่ได้รัน /plan ใหม่)
+plan v3: CR-07 อนุมัติแล้ว (24 ต.ค. 2569) คอลัมน์กลางคงข้อความที่เขียนตอนเป็นข้อเสนอ คอลัมน์สถานะบอกว่าใช้จริงที่ไหน แถวที่ทำจริงต่างจากที่คาดไว้ บอกไว้ในช่องสถานะ รายละเอียดอยู่ในข้อ 9
 
 | Constraint ID | ถ้าอนุมัติ จะใช้ที่ไหนใน plan | สถานะ |
 |---|---|---|
-| REQ-OP-001 | SLO ค้นหาคือ REQ-QA-003 แถวข้างบน (AC-07-08 รอ CR-02) ส่วนเวลาล่มต่อเดือนต้องมี endpoint /health ใหม่ใน main.py และระบบเฝ้าดูนอกโค้ด | รอ CR-07 |
-| REQ-OP-005 | ตัวนับคำขอ เวลาตอบ และคำขอล้มเหลวต่อ endpoint เป็น middleware ใหม่ใน main.py การแจ้งคนเวรใช้คิวแจ้งเตือนเดิม (notify/queue.py) log ผ่าน privacy.py อยู่แล้ว | รอ CR-07 |
-| REQ-OP-006 | เหตุ "gateway ไม่ตอบเกิน 5 นาที" และ "ไม่มีช่างว่าง" เกิดที่ POST /bookings และ GET /technicians ของ feature นี้ คู่มืออยู่ที่ docs/srs/operations.md ไม่มีโค้ด | รอ CR-07 |
-| REQ-OP-007 | ฐานข้อมูลที่สำรองคือฐานข้อมูลของทั้งโครงการ (D-00-02) ไม่มีโค้ดใน feature แต่การซ้อมกู้คืนต้องนับการจองของ feature นี้ที่หายไป | รอ CR-07 |
-| REQ-QA-010 | payments/service.py (timeout และ reference เดิมมีแล้วตาม REQ-IF-005 ต้องเพิ่มพฤติกรรม "รอชำระเงิน" คงล็อก 10 นาทีแทน auto_cancelled ทันที ซึ่งเปลี่ยน AC-07-05 จึงต้องมี CR แก้ AC) notify/queue.py (timeout และส่งซ้ำ) IF-03 ยังไม่เรียกจริงใน R1 | รอ CR-07 |
-| REQ-SEC-010 | GET /jobs/{id}, GET /jobs/{id}/technician-view และ POST /jobs/{id}/cancel ในข้อ 4 ยังไม่ตรวจว่าผู้ส่งเป็นเจ้าของหรือผู้รับมอบหมาย ต้องเพิ่มการตรวจและบันทึกความพยายามใน booking/router.py และ refund/router.py (รหัสตอบ 403 หรือ 404 รอ Q-47) | รอ CR-07 |
-| REQ-SEC-011 | POST /slots/{slot_id}/hold ใน booking/service.py ต้องตรวจว่าลูกค้าคนนี้ถือล็อกที่ยังไม่หมดอายุอยู่หรือไม่ก่อนล็อกช่วงใหม่ ค่า 1 ช่วงอยู่ใน config.py (D-00-05, Q-45) | รอ CR-07 |
-| REQ-PRV-010 | ตาราง customers และ service_addresses (ข้อ 3) เป็นที่เก็บเบอร์ ที่อยู่ พิกัด ต้องมี endpoint คำขอลบใหม่ และ job_status_history กับ jobs ต้องอ้างลูกค้าด้วย id อยู่แล้ว (ไม่มีชื่อในตาราง) ส่วนส่งคำขอลบไป IF-02 ใช้คิวเดิม | รอ CR-07 |
-| REQ-CMP-001 | ไม่มีโค้ด แต่ REQ-PRV-002 (ใช้แล้วใน T-01, T-08) และ REQ-PRV-010 ของ feature นี้ต้องมีบรรทัด "ผลการตรวจโดยฝ่ายกฎหมาย" ตอนนี้คือ "รอการตรวจ" | รอ CR-07 |
+| REQ-OP-001 | SLO ค้นหาคือ REQ-QA-003 แถวข้างบน (AC-07-08 รอ CR-02) ส่วนเวลาล่มต่อเดือนต้องมี endpoint /health ใหม่ใน main.py และระบบเฝ้าดูนอกโค้ด | ใช้แล้ว (T-24 /health และ /ready ใน app/ops/router.py ไม่ใช่ main.py) |
+| REQ-OP-005 | ตัวนับคำขอ เวลาตอบ และคำขอล้มเหลวต่อ endpoint เป็น middleware ใหม่ใน main.py การแจ้งคนเวรใช้คิวแจ้งเตือนเดิม (notify/queue.py) log ผ่าน privacy.py อยู่แล้ว | ใช้แล้ว (T-24 middleware ใน main.py ตัวนับ app/ops/metrics.py การแจ้งคนเวรใช้ Pager ใน app/ops/alerts.py ไม่ใช้คิวแจ้งเตือนของลูกค้า log เป็น log_event) |
+| REQ-OP-006 | เหตุ "gateway ไม่ตอบเกิน 5 นาที" และ "ไม่มีช่างว่าง" เกิดที่ POST /bookings และ GET /technicians ของ feature นี้ คู่มืออยู่ที่ docs/srs/operations.md ไม่มีโค้ด | ใช้แล้ว (T-25 docs/srs/operations.md ฉบับใช้จริง) |
+| REQ-OP-007 | ฐานข้อมูลที่สำรองคือฐานข้อมูลของทั้งโครงการ (D-00-02) ไม่มีโค้ดใน feature แต่การซ้อมกู้คืนต้องนับการจองของ feature นี้ที่หายไป | ใช้แล้ว (T-23 app/ops/backup.py และ backend/ops_backup.py) |
+| REQ-QA-010 | payments/service.py (timeout และ reference เดิมมีแล้วตาม REQ-IF-005 ต้องเพิ่มพฤติกรรม "รอชำระเงิน" คงล็อก 10 นาทีแทน auto_cancelled ทันที ซึ่งเปลี่ยน AC-07-05 จึงต้องมี CR แก้ AC) notify/queue.py (timeout และส่งซ้ำ) IF-03 ยังไม่เรียกจริงใน R1 | ใช้แล้ว (T-18) ไม่ต้องแก้ AC-07-05 เพราะประชุมตีความ "ไม่ตอบ" = ไม่ตอบทั้ง authorize และ status-inquiry (CR-07 ข้อ ข5) เพิ่ม AC-07-12, AC-07-13 แทน notify/queue.py ทำใน T-08 และ T-10 ของ 003 |
+| REQ-SEC-010 | GET /jobs/{id}, GET /jobs/{id}/technician-view และ POST /jobs/{id}/cancel ในข้อ 4 ยังไม่ตรวจว่าผู้ส่งเป็นเจ้าของหรือผู้รับมอบหมาย ต้องเพิ่มการตรวจและบันทึกความพยายามใน booking/router.py และ refund/router.py (รหัสตอบ 403 หรือ 404 รอ Q-47) | ใช้แล้ว (T-20 technician-view ตอบ 403 และบันทึก, T-21 ปิด POST /jobs/{id}/cancel แทนการเพิ่มการตรวจ) GET /jobs/{id} ยังไม่ตรวจ รอ UC-02 (GAP-24) |
+| REQ-SEC-011 | POST /slots/{slot_id}/hold ใน booking/service.py ต้องตรวจว่าลูกค้าคนนี้ถือล็อกที่ยังไม่หมดอายุอยู่หรือไม่ก่อนล็อกช่วงใหม่ ค่า 1 ช่วงอยู่ใน config.py (D-00-05, Q-45) | ใช้แล้ว (T-19 HOLD_LIMIT_PER_CUSTOMER = 1) |
+| REQ-PRV-010 | ตาราง customers และ service_addresses (ข้อ 3) เป็นที่เก็บเบอร์ ที่อยู่ พิกัด ต้องมี endpoint คำขอลบใหม่ และ job_status_history กับ jobs ต้องอ้างลูกค้าด้วย id อยู่แล้ว (ไม่มีชื่อในตาราง) ส่วนส่งคำขอลบไป IF-02 ใช้คิวเดิม | ใช้แล้ว (T-22 โมดูลใหม่ app/erasure/ endpoint ของ ops ไม่ใช่ของลูกค้า และส่งคำขอลบไป IF-02 ผ่าน Notifier ไม่ใช่คิวข้อความ) |
+| REQ-CMP-001 | ไม่มีโค้ด แต่ REQ-PRV-002 (ใช้แล้วใน T-01, T-08) และ REQ-PRV-010 ของ feature นี้ต้องมีบรรทัด "ผลการตรวจโดยฝ่ายกฎหมาย" ตอนนี้คือ "รอการตรวจ" | ใช้แล้ว (SH-05 ตรวจแล้ว EV-045) |
+| REQ-SEC-012 (เพิ่มในประชุม EV-045) | ข้อ 4: ปิด /docs /redoc /openapi.json ในโหมด production /notifications/queue และ /metrics ใช้ X-Ops-Token ช่อง now= ใช้ได้เฉพาะโหมด test (clock.py) และบัญชี endpoint ใน operations.md | ใช้แล้ว (T-24, T-25) |
 
 ## 6. แผนทดสอบจาก Acceptance Criteria
 
@@ -203,3 +206,42 @@ Constraint กลางจาก specs/000-shared/constraints.md รุ่น 1.
 - Q-27 รูปแบบหมายเลขงาน: แสดง # ตามด้วยเลขงาน
 - Q-28 UC-07 A1: แสดงข้อความว่ายังไม่มีช่างว่างอย่างเดียว ไม่มีปุ่มเข้าคิวรอ
 - Q-29 เลือกที่อยู่ให้บริการ: หน้าจอยังใช้ที่อยู่หลักของลูกค้า ไม่มีส่วนให้เลือก
+
+## 9. ปรับตาม CR-07 (plan v3, 24 ต.ค. 2569)
+
+ข้อนี้เพิ่มใหม่ ข้อ 1 ถึง 8 ไม่แก้ เพื่อให้เห็นว่าแผนเดิมคืออะไรและ CR-07 เพิ่มอะไร
+
+### 9.1 โมเดลข้อมูลที่เพิ่ม (migration m002_cr07.py)
+- customers.erased_at (เวลาที่ลบเบอร์ ชื่อ ที่อยู่ พิกัด) REQ-PRV-010
+- ตาราง security_events (kind = denied หรือ phone_revealed, actor_role, actor_id, job_id, endpoint, at) REQ-SEC-010 ไม่มีคอลัมน์เบอร์หรือชื่อ
+- ตาราง erasure_requests (customer_id, requested_at, due_at = requested_at + 30 วัน, completed_at, if02_sent_at, if02_result) REQ-PRV-010
+- payments.result เพิ่มค่า pending (gateway ไม่ตอบเลย) REQ-QA-010
+- ทะเบียนคำขอลบนอกฐานข้อมูล (ไฟล์ ERASURE_LEDGER_PATH) ใช้ลบซ้ำหลังกู้คืน REQ-PRV-010 บรรทัดที่ 4
+
+### 9.2 API ที่เปลี่ยน
+| รายการ | เปลี่ยนอย่างไร | รองรับ |
+|---|---|---|
+| POST /slots/{slot_id}/hold | เพิ่มคำตอบ 409 {reason: hold_limit, message, held[]} เมื่อถือล็อกช่วงอื่นอยู่ | REQ-SEC-011, AC-07-14 |
+| POST /bookings | เพิ่มคำตอบ 202 {reason: payment_pending, job_id, hold_expires_at, message} เมื่อ gateway ไม่ตอบเลย กดซ้ำใช้งานเดิมและ reference เดิม | REQ-QA-010, AC-07-12, AC-07-13 |
+| GET /jobs/{id}/technician-view | ไม่ใช่งานของช่างหรือไม่มีงาน ตอบ 403 เหมือนกัน (เดิม 404) และบันทึก ส่งเบอร์เมื่อไรบันทึกทุกครั้ง | REQ-SEC-010, AC-07-15 |
+| POST /jobs/{id}/cancel | ปิด (ลบ app/refund/router.py) การยกเลิกโดยลูกค้าใช้ customer-cancel ของ 004 | REQ-SEC-010, REQ-SEC-012, AC-07-16 |
+| POST /ops/erasure-requests, GET /ops/erasure-requests/{id} | ใหม่ ใช้โดย call center ในนามลูกค้า ต้องมี X-Ops-Token ในโหมด production | REQ-PRV-010, AC-07-17 |
+| GET /health, GET /ready, GET /metrics | ใหม่ (/health เดิมย้ายไป app/ops/router.py) | REQ-OP-001, REQ-OP-005, AC-00-01, AC-00-04 |
+| GET /notifications/queue | ในโหมด production ต้องมี X-Ops-Token | REQ-SEC-012, AC-00-06 |
+| หน้าเลือกช่าง UI-07-01 | ได้ 409 hold_limit แสดงข้อความที่ระบบส่งมา | AC-07-14 (หน้าจอ) |
+| หน้ายืนยัน UI-07-02 | ได้ 202 payment_pending แสดงข้อความที่ระบบส่งมา ปุ่มยืนยันยังกดได้ | AC-07-12 (หน้าจอ) |
+
+### 9.3 แผนทดสอบที่เพิ่ม
+| AC | test | ตรวจอย่างไร |
+|---|---|---|
+| AC-07-12 | test_AC_07_12_gateway_unreachable_keeps_hold_as_pending, AC-07-12.test.jsx | FakeGateway(mode=timeout, inquiry_answer=timeout) ตรวจ 202 สถานะงาน ล็อก payment pending แล้วเลื่อนเวลา 10 นาที |
+| AC-07-13 | test_AC_07_13_retry_uses_same_reference_no_double_charge, AC-07-12.test.jsx | นับ authorize 1 ครั้ง reference เดียว งาน 1 งาน payment success 1 แถว |
+| AC-07-14 | test_AC_07_14_second_hold_rejected, AC-07-14.test.jsx | ล็อกสองช่วงติดกัน ได้ 409 และ time_slots 1 แถว |
+| AC-07-15 | test_AC_07_15_technician_view_other_job_forbidden_and_logged | 403 สองกรณีคำตอบเหมือนกัน security_events 2 แถว และ phone_revealed 1 แถว |
+| AC-07-16 | test_AC_07_16_legacy_cancel_endpoint_closed | POST /jobs/{id}/cancel ได้ 404 หรือ 405 และ /openapi.json ไม่มี path นี้ |
+| AC-07-17 | test_AC_07_17_erasure_removes_phone_keeps_anonymous_history, test_AC_07_17_erasure_waits_for_active_job | ค้นเบอร์ในทุกตารางของ SQLite |
+| AC-07-18 | test_AC_07_18_restore_does_not_bring_back_erased_data | สำรอง ลบ กู้คืนบนไฟล์ใหม่ ค้นเบอร์ |
+| AC-00-01 ถึง AC-00-08 | backend/tests/test_cross_cutting.py | ดู specs/000-shared/cross-cutting.feature |
+
+### 9.4 ลำดับงาน
+T-17 (ตาราง) ก่อน T-18 ถึง T-23 ซึ่งทำคู่กันได้ T-24 (ops) ใช้ audit จาก T-20 T-25 (คู่มือ) หลัง T-21 และ T-24 เพราะต้องมีบัญชี endpoint ล่าสุด T-26 (หน้าจอ) หลัง T-18 และ T-19 T-27 (รันทั้งชุด) สุดท้าย

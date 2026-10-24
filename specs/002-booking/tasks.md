@@ -5,8 +5,10 @@ Feature: SPEC-BOOKING | อ้างอิง: plan.md (plan v1) | สร้า�
 
 tasks v2 (2569-10-11): เพิ่มช่อง "แบบหน้าจอ" ให้ทุก task และเพิ่ม T-12 ถึง T-16 ตาม CR-03 ด้วยข้อความสั่งในแชต **ไม่ได้รัน /tasks ใหม่** (prompt-log.md #40) เลขและสถานะของ T-01 ถึง T-11 ไม่เปลี่ยน
 
-สรุป: 16 task | 0 task รอ Q-xx ทั้ง task (T-06 ทำได้บางส่วน R3 ใช้พฤติกรรมชั่วคราว)
-สถานะปัจจุบัน: เสร็จ 16 (ทุก task ผ่านการตรวจ 5 ข้อแล้ว task หน้าจอของรอบสองผ่านการตรวจเทียบ mockup 6 ข้อด้วย)
+tasks v3 (2569-10-24): เพิ่ม T-17 ถึง T-27 ตาม CR-07 ด้วยข้อความสั่งในแชต **ไม่ได้รัน /tasks ใหม่** (prompt-log.md #70) เลขและสถานะของ T-01 ถึง T-16 ไม่เปลี่ยน งานที่ไม่ใช่ของ feature ใด (ops/, erasure/, audit.py) อยู่ที่ไฟล์นี้เพราะ CR-07 อยู่ใน changes/ ของ feature นี้
+
+สรุป: 27 task | 0 task รอ Q-xx ทั้ง task (T-06 ทำได้บางส่วน R3 ใช้พฤติกรรมชั่วคราว)
+สถานะปัจจุบัน: เสร็จ 27 (ทุก task ผ่านการตรวจ 5 ข้อแล้ว task หน้าจอของรอบสองผ่านการตรวจเทียบ mockup 6 ข้อด้วย T-26 ตรวจเฉพาะข้อความ เพราะสถานะใหม่ยังไม่มีภาพใน mockup)
 
 ### T-01 ตั้งโครงโปรเจกต์ ฐานข้อมูล และตาราง
 - รองรับ: REQ-DAT-002, REQ-PRV-002, MD-DOM-01
@@ -152,6 +154,105 @@ tasks v2 (2569-10-11): เพิ่มช่อง "แบบหน้าจอ"
 - เสร็จเมื่อ: AC ที่เคยผ่านในรอบที่ 2 ยังผ่านทุกข้อ AC-07-11 ผ่าน และรายการตรวจหน้าจอ 6 ข้อ "ตรง" ครบ 3 หน้า
 - สถานะ: เสร็จ
 
+### T-17 ตารางและ migration ของ CR-07
+- รองรับ: REQ-PRV-010, REQ-SEC-010, REQ-QA-010 (CR-07)
+- ตรวจด้วย: ไม่มี AC ตรง ๆ เป็นงานพื้นฐานของ T-18 ถึง T-23
+- ไฟล์ที่แตะ: backend/app/db/models.py (customers.erased_at, SecurityEvent, ErasureRequest, ค่า pending ของ payments.result), backend/app/db/migrations/m002_cr07.py (ใหม่), backend/app/main.py (เรียก m002)
+- แบบหน้าจอ: ไม่มี
+- ต้องทำหลัง: T-01
+- เสร็จเมื่อ: test เดิมทั้งชุดผ่านบนฐานข้อมูลใหม่ และ m002 เพิ่มคอลัมน์ erased_at ให้ฐานข้อมูลเก่าได้
+- สถานะ: เสร็จ
+
+### T-18 gateway ไม่ตอบเลย คงล็อกเป็น "รอชำระเงิน" และลองใหม่ด้วย reference เดิม (CR-07)
+- รองรับ: REQ-QA-010 บรรทัดที่ 2 และ 3, REQ-IF-005, REQ-FN-041, D-07-06
+- ตรวจด้วย: AC-07-12, AC-07-13 (AC-07-05 และ AC-07-07 ต้องผ่านเหมือนเดิม)
+- ไฟล์ที่แตะ: backend/app/payments/gateway.py (FakeGateway inquiry_answer = timeout), backend/app/payments/service.py (pending, settle, retry_pending, settle_on_hold_expiry), backend/app/booking/service.py (PaymentPending, ใช้งานเดิมเมื่อกดซ้ำ), backend/app/booking/router.py (202 payment_pending), backend/app/technicians/service.py (ปิดเรื่องเงินก่อนปล่อยล็อกที่หมดอายุ), backend/app/technicians/router.py (commit หลังค้นหา), backend/tests/test_booking_cr07.py
+- แบบหน้าจอ: UI-07-02 (ทำใน T-26)
+- ต้องทำหลัง: T-17
+- เสร็จเมื่อ: test_AC_07_12 และ test_AC_07_13 ผ่าน authorize ถูกเรียก 1 ครั้งต่องานเสมอ และ status-inquiry ที่ไม่ตอบไม่ทำให้เกิด 500 อีก (GAP-21)
+- สถานะ: เสร็จ
+
+### T-19 จำกัดการล็อกช่วงเวลา 1 ช่วงต่อลูกค้า (CR-07)
+- รองรับ: REQ-SEC-011, D-00-05
+- ตรวจด้วย: AC-07-14
+- ไฟล์ที่แตะ: backend/app/config.py (HOLD_LIMIT_PER_CUSTOMER), backend/app/booking/service.py (HoldLimitReached), backend/app/booking/router.py (409 hold_limit), backend/app/technicians/service.py (flush หลังปล่อยล็อก), backend/tests/test_booking_cr07.py
+- แบบหน้าจอ: UI-07-01 (ทำใน T-26)
+- ต้องทำหลัง: T-02
+- เสร็จเมื่อ: test_AC_07_14 ผ่าน และพิสูจน์ชั้น 3: ตั้ง HOLD_LIMIT_PER_CUSTOMER = 2 แล้ว test พัง
+- สถานะ: เสร็จ (พิสูจน์ชั้น 3 แล้ว test_AC_07_14 พัง 1 ตัว แก้กลับแล้วผ่าน)
+
+### T-20 สิทธิ์ต่องาน 403 และบันทึกความพยายามที่มุมมองช่าง (CR-07)
+- รองรับ: REQ-SEC-010 บรรทัดที่ 1, 2, 4, REQ-SEC-004
+- ตรวจด้วย: AC-07-15 (AC-07-09 ต้องผ่านเหมือนเดิม)
+- ไฟล์ที่แตะ: backend/app/ops/audit.py (ใหม่ ใช้ร่วมทุก feature), backend/app/booking/router.py (technician-view), backend/tests/test_booking_cr07.py
+- แบบหน้าจอ: ไม่มี
+- ต้องทำหลัง: T-17
+- เสร็จเมื่อ: test_AC_07_15 ผ่าน คำตอบของงานคนอื่นกับงานที่ไม่มีเหมือนกันทุกตัวอักษร
+- สถานะ: เสร็จ
+
+### T-21 ปิด POST /jobs/{id}/cancel (CR-07)
+- รองรับ: REQ-SEC-010, REQ-SEC-012, D-07-07, MU-01
+- ตรวจด้วย: AC-07-16 และ AC-07-10 ทุกแถว (test เปลี่ยนเฉพาะ helper ส่วน When ตามตาราง test เดิมที่เปลี่ยนใน CR-07)
+- ไฟล์ที่แตะ: backend/app/refund/router.py (ลบ), backend/app/main.py (ไม่ include), backend/tests/test_refund.py (helper cancel), backend/tests/test_booking_cr07.py
+- แบบหน้าจอ: ไม่มี (หน้าจอไม่เคยเรียก endpoint นี้)
+- ต้องทำหลัง: T-06
+- เสร็จเมื่อ: test_AC_07_16 ผ่าน และ AC-07-10 ผ่านทุกแถวด้วยตัวเลขเดิม
+- สถานะ: เสร็จ
+
+### T-22 คำขอลบข้อมูลลูกค้า (CR-07)
+- รองรับ: REQ-PRV-010 บรรทัดที่ 1 ถึง 3, REQ-DAT-002
+- ตรวจด้วย: AC-07-17
+- ไฟล์ที่แตะ: backend/app/erasure/ (ใหม่: service.py, router.py), backend/app/notify/queue.py (Notifier.request_erasure), backend/app/config.py (ERASURE_DEADLINE_DAYS, erasure_ledger_path), backend/tests/test_erasure.py
+- แบบหน้าจอ: ไม่มี (R1 รับคำขอผ่าน call center)
+- ต้องทำหลัง: T-17
+- เสร็จเมื่อ: test_AC_07_17 ทั้ง 2 ตัวผ่าน ค้นเบอร์ในทุกตารางไม่พบ
+- สถานะ: เสร็จ
+
+### T-23 สำรอง กู้คืน และลบซ้ำหลังกู้คืน (CR-07)
+- รองรับ: REQ-OP-007, REQ-PRV-010 บรรทัดที่ 4
+- ตรวจด้วย: AC-00-05, AC-07-18
+- ไฟล์ที่แตะ: backend/app/ops/backup.py (ใหม่), backend/ops_backup.py (ใหม่ คำสั่งของคนเวร), backend/app/erasure/service.py (reapply_ledger), backend/tests/test_cross_cutting.py, backend/tests/test_erasure.py
+- แบบหน้าจอ: ไม่มี
+- ต้องทำหลัง: T-22
+- เสร็จเมื่อ: test_AC_00_05 และ test_AC_07_18 ผ่าน และลองคำสั่ง ops_backup.py backup แล้ว restore บนเครื่องว่างจริงได้ 1 รอบ
+- สถานะ: เสร็จ (ซ้อมด้วยคำสั่งบนเครื่องพัฒนาแล้ว การซ้อมบน PostgreSQL ของระบบจริงยังไม่ทำ ดู operations.md)
+
+### T-24 การเฝ้าดู /health /ready /metrics log มีโครงสร้าง และการตั้งค่าโหมด production (CR-07)
+- รองรับ: REQ-OP-001, REQ-OP-005, REQ-SEC-010 บรรทัดที่ 3, REQ-SEC-012, REQ-PRV-002
+- ตรวจด้วย: AC-00-01 ถึง AC-00-04, AC-00-06 ถึง AC-00-08 (AC-07-09 ต้องผ่านเหมือนเดิม)
+- ไฟล์ที่แตะ: backend/app/ops/ (ใหม่: metrics.py, alerts.py, guard.py, router.py, scheduler.py), backend/app/main.py (create_app, middleware, งานเบื้องหลังทุก 1 นาที), backend/app/clock.py (now= เฉพาะโหมด test), backend/app/config.py, backend/app/privacy.py (log_event), router และ service ทุกตัวที่ log, backend/tests/conftest.py (APP_ENV = test), backend/tests/test_cross_cutting.py
+- แบบหน้าจอ: ไม่มี
+- ต้องทำหลัง: T-20
+- เสร็จเมื่อ: test_cross_cutting.py ผ่านทั้งไฟล์ และค้น log.info ใน backend/app ต้องไม่เหลือ (ใช้ log_event ทั้งหมด)
+- สถานะ: เสร็จ
+
+### T-25 คู่มือรับมือเหตุฉบับใช้จริง และบัญชี endpoint (CR-07)
+- รองรับ: REQ-OP-006, REQ-OP-007, REQ-SEC-012
+- ตรวจด้วย: ไม่มี AC ตรวจด้วย walkthrough (EV-045) และเทียบบัญชี endpoint กับ /openapi.json ของโหมด development
+- ไฟล์ที่แตะ: docs/srs/operations.md
+- แบบหน้าจอ: ไม่มี
+- ต้องทำหลัง: T-21, T-23, T-24
+- เสร็จเมื่อ: เหตุการณ์ที่ 1 ถึง 3 ผ่าน walkthrough และบัญชี endpoint ตรงกับ /openapi.json ทุกแถว
+- สถานะ: เสร็จ (เหตุการณ์ที่ 4 และ 5 ยังไม่ได้ walkthrough)
+
+### T-26 หน้าจอรับคำตอบใหม่ของ CR-07 (UI-07-01, UI-07-02)
+- รองรับ: REQ-SEC-011, REQ-QA-010, D-00-05
+- ตรวจด้วย: AC-07-12 (หน้าจอ) AC-07-13 (หน้าจอ) AC-07-14 (หน้าจอ) และ test หน้าจอเดิมทั้งหมด
+- ไฟล์ที่แตะ: frontend/src/pages/TechnicianPicker.jsx, frontend/src/pages/ConfirmBooking.jsx, frontend/src/__tests__/AC-07-12.test.jsx, frontend/src/__tests__/AC-07-14.test.jsx
+- แบบหน้าจอ: UI-07-01, UI-07-02 (รายการ "ต้องตรง" ที่ CR-07 เพิ่ม ยังไม่มีภาพใน mockup GAP-26)
+- ต้องทำหลัง: T-18, T-19
+- เสร็จเมื่อ: npm test ผ่านทั้งหมด และไม่มีตัวเลขนาทีหรือเวลาพิมพ์ในหน้าจอ (ข้อความมาจาก API)
+- สถานะ: เสร็จ
+
+### T-27 รัน test ทั้งชุดหลัง CR-07
+- รองรับ: ทุก REQ ของ CR-07
+- ตรวจด้วย: ทุก AC ของ 002, 003, 004 และ AC-00-01 ถึง 08
+- ไฟล์ที่แตะ: specs/000-shared/test-run.txt, specs/000-shared/test-run-cr07-round1.txt, ac-results.md ของทุก feature และ 000-shared, rtm.md ของทุก feature, specs/000-shared/gaps.md, docs/srs/baseline.md
+- แบบหน้าจอ: ไม่มี
+- ต้องทำหลัง: T-17 ถึง T-26 และ T-08 ถึง T-11 ของ 003, T-07 ถึง T-10 ของ 004
+- เสร็จเมื่อ: test เดิมที่ไม่อยู่ในตาราง "test เดิมที่เปลี่ยน" ของ CR-07 ผ่านโดยไม่ถูกแตะ และ test ใหม่ผ่านทั้งหมด
+- สถานะ: เสร็จ
+
 ## ตารางตรวจความครบ
 
 | AC ID | task ที่ตรวจ AC นี้ |
@@ -192,3 +293,29 @@ tasks v2 (2569-10-11): เพิ่มช่อง "แบบหน้าจอ"
 - Q-22 geoPoint: เก็บแต่ไม่ส่งออก ยังไม่มี task เพราะไม่มี REQ รองรับ
 - Q-23 ใครปลดล็อก: ใช้ AS-07 หมดอายุเอง (T-02) รอกลุ่มยืนยันกับเจ้าของ
 - Q-26 ราคาประเมิน, Q-27 รูปแบบหมายเลขงาน, Q-28 UC-07 A1, Q-29 เลือกที่อยู่: ยังไม่มี task เพราะยังไม่มี REQ หรือ AC รองรับ หน้าจอใช้พฤติกรรมชั่วคราวตาม spec ส่วน 9
+
+### ส่วนที่เพิ่มตาม CR-07 (tasks v3)
+
+| AC | task |
+|---|---|
+| AC-07-12, AC-07-13 | T-18, T-26 (หน้าจอ) |
+| AC-07-14 | T-19, T-26 (หน้าจอ) |
+| AC-07-15 | T-20 |
+| AC-07-16 | T-21 |
+| AC-07-17 | T-22 |
+| AC-07-18 | T-23 |
+| AC-00-01 ถึง AC-00-04, AC-00-06 ถึง AC-00-08 | T-24 |
+| AC-00-05 | T-23 |
+
+| Constraint ID (รุ่น 1.1) | task ที่ทำให้เป็นจริง |
+|---|---|
+| REQ-OP-001 | T-24 |
+| REQ-OP-005 | T-24 |
+| REQ-OP-006 | T-25 |
+| REQ-OP-007 | T-23, T-25 |
+| REQ-QA-010 | T-18 (IF-01 ตัดมัดจำ) IF-02 อยู่ที่ T-08, T-10 ของ 003 IF-01 คืนเงินอยู่ที่ T-08 ของ 004 IF-03 ยังไม่เรียกจริง (ค่าใน config) |
+| REQ-SEC-010 | T-20, T-21, T-24 (บรรทัดที่ 3) |
+| REQ-SEC-011 | T-19 |
+| REQ-SEC-012 | T-21, T-24, T-25 |
+| REQ-PRV-010 | T-22, T-23 |
+| REQ-CMP-001 | ไม่มี task (SH-05 ตรวจเอกสาร EV-045) |
