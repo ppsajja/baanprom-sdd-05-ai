@@ -1,0 +1,48 @@
+# ผลรันจริง 11 ต.ค. 2569 (รอบที่ 4 หลัง CR-03 และ CR-04) | หลังบ้าน: cd backend && pytest -v -k "AC_" | หน้าจอ: cd frontend && npm test
+# รันบนเครื่องของสมาชิก D (Python 3.12) หลังแก้ GAP-15 | รันซ้ำบน Python 3.11 และ 3.13 ได้ผลเท่ากัน | รอบที่ 3 อยู่ใน test-run-round3.txt
+# ส่วนหน้าจอย่อจากผลของ vitest: คงชื่อไฟล์ จำนวน test และเวลาไว้ เขียนเครื่องหมายผ่านเป็นคำว่า PASS
+
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0 -- /usr/bin/python3
+rootdir: /workspaces/baanprom-swreqspec/backend
+configfile: pytest.ini
+testpaths: tests
+plugins: anyio-4.15.1
+collecting ... collected 20 items
+
+tests/test_booking.py::test_AC_07_01_booking_success PASSED              [  5%]
+tests/test_booking.py::test_AC_07_02_slot_not_rebookable PASSED          [ 10%]
+tests/test_booking.py::test_AC_07_03_notify_both_within_60s PASSED       [ 15%]
+tests/test_booking.py::test_AC_07_04_no_charge_when_slot_taken PASSED    [ 20%]
+tests/test_deposit.py::test_AC_07_11_deposit_shown_equals_charged[plumbing-350] PASSED [ 25%]
+tests/test_deposit.py::test_AC_07_11_deposit_shown_equals_charged[electric-400] PASSED [ 30%]
+tests/test_deposit.py::test_AC_07_11_deposit_shown_equals_charged[aircon-500] PASSED [ 35%]
+tests/test_deposit.py::test_AC_07_11_unknown_category_has_no_guessed_deposit PASSED [ 40%]
+tests/test_load_scaled.py::test_AC_07_08_search_under_load_scaled PASSED [ 45%]
+tests/test_payment.py::test_AC_07_05_payment_timeout PASSED              [ 50%]
+tests/test_payment.py::test_AC_07_06_payment_declined PASSED             [ 55%]
+tests/test_payment.py::test_AC_07_07_inquiry_approved_no_double_charge PASSED [ 60%]
+tests/test_privacy.py::test_AC_07_09_phone_hidden_until_2h PASSED        [ 65%]
+tests/test_refund.py::test_AC_07_10_refund[R1-confirmed-48-customer-cancelled-350] PASSED [ 70%]
+tests/test_refund.py::test_AC_07_10_refund[R2-confirmed-5-customer-cancelled-180] PASSED [ 75%]
+tests/test_refund.py::test_AC_07_10_refund[R4-rematching-20-system-cancelled-350] PASSED [ 80%]
+tests/test_refund.py::test_AC_07_10_refund[R5-pending_payment-30-system-auto_cancelled-0] PASSED [ 85%]
+tests/test_refund.py::test_AC_07_10_refund_R6_not_allowed PASSED         [ 90%]
+tests/test_refund.py::test_AC_07_10_refund_R3 SKIPPED (รอ Q-14 (BR-0...) [ 95%]
+tests/test_refund.py::test_AC_07_10_refund_R3_temporary_behaviour PASSED [100%]
+
+=============================== warnings summary ===============================
+/usr/lib/python3.12/site-packages/fastapi/testclient.py:1
+  /usr/lib/python3.12/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=================== 19 passed, 1 skipped, 1 warning in 0.77s ===================
+ PASS src/__tests__/AC-07-04.test.jsx (1 test) 152ms
+ PASS src/__tests__/UI-07-03.test.jsx (1 test) 135ms
+ PASS src/__tests__/UI-07-01.test.jsx (4 tests) 293ms
+ PASS src/__tests__/UI-07-02.test.jsx (5 tests) 187ms
+ PASS src/__tests__/AC-07-06.test.jsx (1 test) 157ms
+ PASS src/__tests__/AC-07-11.test.jsx (2 tests) 125ms
+ Test Files  6 passed (6)
+      Tests  14 passed (14)

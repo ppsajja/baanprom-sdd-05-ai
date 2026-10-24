@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UI-XX-NN ชื่อหน้าจอ</title>
+<style>
+  /* สี ฟอนต์ และระยะห่าง คือส่วนที่ "ยืดหยุ่นได้" แก้ได้ตามโปรเจกต์ */
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:system-ui,"Segoe UI","Noto Sans Thai",Tahoma,sans-serif;background:#eef2f4;color:#1e293b;padding:24px;line-height:1.6}
+  .note{max-width:1100px;margin:0 auto 16px;background:#fff7e6;border:1px dashed #d79a2b;border-radius:10px;padding:10px 14px;font-size:14px;color:#7a5414}
+  .row{display:flex;flex-wrap:wrap;gap:20px;justify-content:center}
+  .state{width:340px}
+  .state h2{font-size:14px;color:#475569;margin:0 0 8px 4px;font-weight:600}
+  .phone{background:#fff;border:1px solid #cbd5e1;border-radius:22px;padding:18px 16px 22px;box-shadow:0 6px 18px rgba(0,0,0,.06);min-height:480px}
+  .bar{font-weight:700;font-size:18px;margin-bottom:14px;color:#115e59}
+  label{display:block;font-size:13px;color:#475569;margin:12px 0 4px}
+  .input{border:1px solid #94a3b8;border-radius:10px;padding:10px 12px;background:#fff;color:#64748b}
+  .btn{display:block;text-align:center;background:#0f766e;color:#fff;border-radius:12px;padding:12px;font-weight:700;margin-top:18px}
+  .btn.ghost{background:#fff;color:#0f766e;border:1px solid #0f766e}
+  .alert{border-radius:12px;padding:12px 14px;margin-top:6px;font-size:14px;background:#fef2f2;border:1px solid #fca5a5;color:#991b1b}
+  .alert b{display:block;font-size:16px;margin-bottom:2px}
+  .todo{border:2px dashed #d79a2b;border-radius:12px;padding:14px;text-align:center;color:#7a5414;background:#fffaf0;margin-top:12px;font-size:14px}
+</style>
+</head>
+<body>
+<!-- MOCKUP สำหรับคุยกับผู้ใช้และ PO ไม่ใช่โค้ดจริง ห้ามคัดลอกไฟล์นี้ไปเป็นโค้ดทั้งไฟล์
+     วิธีใช้ไฟล์นี้
+     1. คัดลอกไปที่ specs/NNN-<feature>/mockups/UI-<เลข use case>-<เลขหน้า>-<ชื่ออังกฤษ>.html
+     2. แก้ชื่อหน้า ข้อความ และช่องให้ตรงกับที่ตกลงกับผู้ใช้ ใช้ข้อมูลตัวอย่าง ไม่ใส่ JavaScript
+     3. ใส่ data-req="REQ-xx-nnn" ที่ปุ่ม ช่อง หรือกล่องข้อความ ว่าส่วนนั้นรองรับ requirement ข้อไหน
+     4. หน้าเดียวมีหลายสถานะ (ปกติ / ผิดพลาด / ไม่มีข้อมูล) ให้เพิ่ม <section class="state"> ต่อกันในไฟล์เดียว
+     5. เรื่องที่ยังเป็น Q-xx ห้ามเดา ให้ใช้กล่อง .todo เขียนว่า "รอ Q-xx"
+     6. เปิดไฟล์ในเบราว์เซอร์ จับภาพหน้าจอเป็น .png ชื่อเดียวกัน ให้ PO ยืนยัน
+     7. เขียนส่วน 12 หน้าจอ (UI) ใน spec.md ว่าอะไร "ต้องตรง" อะไร "ยืดหยุ่นได้" (ดู docs/mockup-guide.md) -->
+<p class="note">MOCKUP UI-XX-NN ชื่อหน้าจอ | รองรับ REQ-xx-nnn, REQ-xx-nnn | ข้อมูลทั้งหมดเป็นตัวอย่าง</p>
+<div class="row">
+  <section class="state">
+    <h2>สถานะปกติ</h2>
+    <div class="phone">
+      <div class="bar">ชื่อหน้าจอ</div>
+      <label>ชื่อช่องที่ 1</label>
+      <div class="input" data-req="REQ-xx-nnn">ข้อมูลตัวอย่าง</div>
+      <label>ชื่อช่องที่ 2</label>
+      <div class="input" data-req="REQ-xx-nnn">ข้อมูลตัวอย่าง</div>
+      <div class="todo">รอ Q-xx: ส่วนที่ยังไม่มีคำตอบจากผู้ใช้</div>
+      <span class="btn" data-req="REQ-xx-nnn">ชื่อปุ่มหลัก</span>
+      <span class="btn ghost">กลับ</span>
+    </div>
+  </section>
+  <section class="state">
+    <h2>สถานะ: กรณีผิดพลาด (AC-xx-nn)</h2>
+    <div class="phone">
+      <div class="bar">ชื่อหน้าจอ</div>
+      <div class="alert" data-req="REQ-xx-nnn"><b>ข้อความแจ้งตาม Then ของ AC</b>คำอธิบายสั้น ๆ ที่ผู้ใช้จะเห็น</div>
+      <span class="btn ghost">กลับไปแก้</span>
+    </div>
+  </section>
+</div>
+</body>
+</html>

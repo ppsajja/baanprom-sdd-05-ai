@@ -1,0 +1,16 @@
+# ผลรันจริง 11 ต.ค. 2569 (รอบที่ 3 รันทั้งชุดครั้งแรกหลัง /implement T-12 ถึง T-15) | หน้าจอ: cd frontend && npm test
+# หลังบ้านรอบนี้ผ่านเท่ากับรอบที่ 4 (19 passed, 1 skipped) จึงเก็บไว้เฉพาะส่วนหน้าจอที่ไม่ผ่าน ดู gaps.md GAP-16 และ GAP-17
+# ย่อจากผลของ vitest: คงชื่อไฟล์ ชื่อ test และข้อความผิดพลาดไว้ เขียนเครื่องหมายเป็นคำว่า PASS และ FAIL ตัดรายการบรรทัดของ library ออก
+
+ PASS src/__tests__/UI-07-02.test.jsx (5 tests) 180ms
+ PASS src/__tests__/UI-07-01.test.jsx (4 tests) 260ms
+ FAIL src/__tests__/UI-07-03.test.jsx (1 test | 1 failed) 65ms
+   ไม่ผ่าน: UI-07-03 แสดงหมายเลขงาน สถานะตาม glossary ยอดมัดจำที่ชำระ และข้อความแจ้งเตือน 63ms
+     Unable to find an element with the text: 3 ผลการจอง. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ FAIL src/__tests__/AC-07-04.test.jsx (1 test | 1 failed) 1158ms
+   ไม่ผ่าน: AC-07-04 แสดง "ช่วงเวลาถูกจองแล้ว" และปุ่มช่วงใกล้เคียงอย่างน้อย 2 ปุ่ม โดยไม่ตัดเงิน 1157ms
+     Unable to find role="alert"
+ PASS src/__tests__/AC-07-11.test.jsx (2 tests) 113ms
+ PASS src/__tests__/AC-07-06.test.jsx (1 test) 125ms
+ Test Files  2 failed | 4 passed (6)
+      Tests  2 failed | 12 passed (14)

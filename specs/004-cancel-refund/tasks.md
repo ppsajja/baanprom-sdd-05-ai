@@ -1,0 +1,93 @@
+# Tasks: ลูกค้ายกเลิกการจองและรับเงินคืน (UC-08)
+
+Feature: SPEC-CANCEL | อ้างอิง: plan.md (plan v1) | สร้างด้วย /tasks วันที่ 2569-10-18 (tasks v1, prompt-log.md #59)
+ไม่มีการสั่งแก้รอบที่ 1: ทีมตรวจแล้วรับทั้งไฟล์ (AI ตั้ง T-02 ให้ "ต้องทำหลัง" T-01 และระบุว่าต้องรัน test ของ 002 ซ้ำใน "เสร็จเมื่อ" เพราะแตะไฟล์ของ 002 ตามตารางผลกระทบของ CR-06)
+
+สรุป: 6 task | 0 task รอ Q-xx ทั้ง task (Q-14, Q-34, Q-35 มีพฤติกรรมชั่วคราวใน spec ส่วน 9)
+สถานะปัจจุบัน: เสร็จ 6 (ทุก task ผ่านการตรวจ 5 ข้อแล้ว task หน้าจอผ่านการตรวจเทียบ mockup 6 ข้อด้วย)
+
+### T-01 เมธอด refund ใน Gateway และคอลัมน์ผลคืนเงินในตาราง refunds
+- รองรับ: REQ-IF-010, REQ-CON-003, D-08-02
+- ตรวจด้วย: ไม่มี AC ตรง ๆ เป็นงานพื้นฐานของ T-02, T-03
+- ไฟล์ที่แตะ: backend/app/payments/gateway.py (Gateway.refund, FakeGateway.refund และ refund_mode), backend/app/db/models.py (Refund.gateway_ref, Refund.result) ทั้งสองไฟล์เป็นของ 002 อนุญาตตามตารางผลกระทบของ CR-06
+- แบบหน้าจอ: ไม่มี
+- ต้องทำหลัง: ไม่มี
+- เสร็จเมื่อ: FakeGateway().refund("x", 100) คืน approved และบันทึก "refund:x:100" ใน calls และ test ทั้งชุดของ 002 ยังผ่าน
+- สถานะ: เสร็จ
+
+### T-02 ขยาย cancel_job ให้ทำ BR-05 ครบ และฟังก์ชัน quote
+- รองรับ: REQ-BR-001, REQ-IF-010, REQ-DAT-002, REQ-DAT-003, REQ-FN-055, BR-05, D-08-01, D-08-02
+- ตรวจด้วย: AC-08-02, AC-08-03, AC-08-04, AC-08-05 (ผ่าน endpoint ของ T-03) และ AC-07-10 ของ 002 ต้องยังผ่าน
+- ไฟล์ที่แตะ: backend/app/refund/service.py (quote, cancel_job รับ gateway, ข้อความ R3 / R6 / ยกเลิกซ้ำ, แจ้งสองฝ่าย), backend/app/refund/router.py (ส่ง get_gateway())
+- แบบหน้าจอ: ไม่มี
+- ต้องทำหลัง: T-01
+- เสร็จเมื่อ: pytest ทั้งชุดของ 002 ให้ผลเท่าเดิม (19 ผ่าน 1 ข้าม) และ cancel_job ของงาน confirmed สร้าง Refund ที่มี gateway_ref และ result
+- สถานะ: เสร็จ
+
+### T-03 endpoint ของลูกค้า refund-quote และ customer-cancel
+- รองรับ: REQ-FN-054, REQ-BR-001, REQ-IF-010, REQ-FN-055, REQ-PRV-002, AS-13, D-08-03
+- ตรวจด้วย: AC-08-01, AC-08-02, AC-08-03, AC-08-04, AC-08-05, AC-08-06
+- ไฟล์ที่แตะ: backend/app/cancel/__init__.py, backend/app/cancel/router.py, backend/app/main.py (include_router), backend/tests/test_cancel.py
+- แบบหน้าจอ: ไม่มี
+- ต้องทำหลัง: T-02
+- เสร็จเมื่อ: test_AC_08_01 ถึง test_AC_08_06 ผ่านทุกตัว และเมื่อให้ quote ใช้เวลาต่างจาก cancel (AS-13) test_AC_08_01 ยังอธิบายได้
+- สถานะ: เสร็จ
+
+### T-04 หน้ายกเลิกการจองตามแบบ UI-08-01
+- รองรับ: REQ-FN-054, REQ-BR-001, REQ-IF-010, D-00-05, D-08-03
+- ตรวจด้วย: AC-08-01 (หน้าจอ), AC-08-06 (หน้าจอ) และรายการ "ต้องตรง" ของ UI-08-01
+- ไฟล์ที่แตะ: frontend/src/api/client.js (cancelApi), frontend/src/pages/CancelBooking.jsx, frontend/src/__tests__/UI-08-01.test.jsx, frontend/src/__tests__/AC-08-01.test.jsx, frontend/src/__tests__/AC-08-06.test.jsx
+- แบบหน้าจอ: UI-08-01 mockups/UI-08-01-cancel.html
+- ต้องทำหลัง: ไม่มี (ใช้ API จำลองตามสัญญาใน plan.md ข้อ 4 และ statusNames.js จาก 003 T-05 ซึ่งเสร็จแล้ว)
+- เสร็จเมื่อ: npm test ผ่าน UI-08-01.test.jsx, AC-08-01.test.jsx, AC-08-06.test.jsx และไม่มีตัวเลขเงื่อนไข BR-01 ในไฟล์หน้าจอ
+- สถานะ: เสร็จ
+
+### T-05 หน้าผลการยกเลิกตามแบบ UI-08-02 และต่อเข้าแถบเมนู
+- รองรับ: REQ-FN-054, REQ-FN-055, REQ-BR-001
+- ตรวจด้วย: รายการ "ต้องตรง" ของ UI-08-02
+- ไฟล์ที่แตะ: frontend/src/pages/CancelResult.jsx, frontend/src/App.jsx (มุมมอง "ยกเลิกการจอง"), frontend/src/__tests__/UI-08-02.test.jsx
+- แบบหน้าจอ: UI-08-02 mockups/UI-08-02-cancel-result.html
+- ต้องทำหลัง: T-04
+- เสร็จเมื่อ: npm test ผ่าน UI-08-02.test.jsx และไม่มีข้อความจำนวนวันของ Q-35 บนหน้าจอ
+- สถานะ: เสร็จ
+
+### T-06 รัน test ทั้งชุด และตรวจหน้าจอจริงเทียบ mockup ด้วยคน
+- รองรับ: REQ-FN-054, REQ-BR-001, REQ-IF-010
+- ตรวจด้วย: ทุก AC ของ UC-08, UC-09 และ UC-07 (รันซ้ำทั้งชุด) และรายการตรวจ 6 ข้อใน docs/mockup-guide.md ข้อ 9
+- ไฟล์ที่แตะ: specs/004-cancel-refund/test-run.txt, ac-results.md, gaps.md, rtm.md, ui-review/ (ภาพหน้าจอจริงและ ui-review.md), docs/srs/baseline.md
+- แบบหน้าจอ: UI-08-01, UI-08-02
+- ต้องทำหลัง: T-03, T-04, T-05
+- เสร็จเมื่อ: AC ของ 002 และ 003 ที่เคยผ่านยังผ่านทุกข้อ AC-08-01 ถึง 06 ผ่าน และรายการตรวจหน้าจอ 6 ข้อ "ตรง" ครบ 2 หน้า
+- สถานะ: เสร็จ
+
+## ตารางตรวจความครบ
+
+| AC ID | task ที่ตรวจ AC นี้ |
+|---|---|
+| AC-08-01 | T-03, T-04 (หน้าจอ) |
+| AC-08-02 | T-02, T-03 |
+| AC-08-03 | T-01, T-02, T-03 |
+| AC-08-04 | T-02, T-03 |
+| AC-08-05 | T-02, T-03 |
+| AC-08-06 | T-03, T-04 (หน้าจอ) |
+| AC-07-10 (ใช้ร่วม รันซ้ำ) | T-02, T-06 |
+| รายการ "ต้องตรง" ของ UI-08-01, UI-08-02 | T-04, T-05 และ T-06 (ตรวจด้วยคน) |
+
+| Constraint ID | task ที่ทำให้เป็นจริง |
+|---|---|
+| REQ-IF-010 | T-01, T-02 |
+| REQ-DAT-002 | T-02 |
+| REQ-DAT-003 | T-02 |
+| REQ-CON-001 | ทุก task ตัดการยกเลิกแทนโดย call center และการร้องเรียนออก (EV-044) |
+| REQ-CON-003 | T-01 (interface Gateway ตัวเดิม) |
+| REQ-PRV-002 | T-02, T-03 (logger ผ่าน privacy.py) |
+| D-00-01, D-00-02, D-00-03 | T-01, T-03, T-04 (ใช้โครงเดิม) |
+| D-00-04 | ทุก task ที่มี test |
+| D-00-05 | T-02 (BR-01 ที่เดียว), T-04 (ยอดจาก API) |
+
+## สิ่งที่ยังไม่ทำ
+
+- Q-14 R3: ไม่มี task T-03 ใช้ข้อความชั่วคราวของ 002
+- Q-33 คิวรอ (waitlist) ยังไม่มีรหัส UC: ไม่มี task รอ RE lead
+- Q-34 gateway ปฏิเสธคำขอคืนเงิน: ไม่มี task T-02 แค่บันทึกผล
+- Q-35 ช่องทางและจำนวนวัน: ไม่มี task รอ Finance
